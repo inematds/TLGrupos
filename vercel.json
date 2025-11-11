@@ -1,16 +1,5 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/send-notifications",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/remove-expired",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/processar-pagamentos",
-      "schedule": "*/30 * * * *"
-    }
-  ]
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install"
 }
