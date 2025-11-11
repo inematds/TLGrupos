@@ -1,0 +1,13 @@
+# Lista de IDs de membros do Telegram
+# Um ID por linha
+# Linhas começando com # são ignoradas
+#
+# Como obter os IDs dos membros:
+# 1. Peça para cada membro enviar uma mensagem para @userinfobot
+# 2. O bot retornará o ID numérico do usuário
+# 3. Adicione os IDs aqui
+
+# Exemplo:
+# 123456789
+# 987654321
+# 555666777

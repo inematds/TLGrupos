@@ -1,0 +1,30 @@
+# Exemplo de configuração do crontab para TLGrupos
+# Para editar o crontab, execute: crontab -e
+#
+# Formato do crontab:
+# ┌───────────── minuto (0 - 59)
+# │ ┌───────────── hora (0 - 23)
+# │ │ ┌───────────── dia do mês (1 - 31)
+# │ │ │ ┌───────────── mês (1 - 12)
+# │ │ │ │ ┌───────────── dia da semana (0 - 6) (domingo = 0)
+# │ │ │ │ │
+# * * * * * comando a ser executado
+
+# IMPORTANTE: Ajuste o caminho para o seu projeto!
+PROJECT_PATH=/home/seu-usuario/projetos/TLGrupos
+
+# Enviar notificações de vencimento todos os dias às 9h
+0 9 * * * cd $PROJECT_PATH && npm run cron:send-notifications >> logs/notifications.log 2>&1
+
+# Remover membros vencidos todos os dias à meia-noite
+0 0 * * * cd $PROJECT_PATH && npm run cron:check-expired >> logs/expired.log 2>&1
+
+# Alternativa usando node diretamente:
+# 0 9 * * * cd $PROJECT_PATH && NODE_ENV=production npx tsx scripts/send-expiry-notifications.ts >> logs/notifications.log 2>&1
+# 0 0 * * * cd $PROJECT_PATH && NODE_ENV=production npx tsx scripts/check-expired-members.ts >> logs/expired.log 2>&1
+
+# Dicas:
+# - Crie a pasta logs antes: mkdir -p logs
+# - Teste os scripts manualmente antes de adicionar ao cron
+# - Verifique os logs regularmente para garantir que está funcionando
+# - Use ferramentas como PM2 para gerenciar processos em produção

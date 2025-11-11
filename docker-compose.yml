@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  tlgrupos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tlgrupos-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Supabase
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+
+      # Telegram
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_GROUP_ID=${TELEGRAM_GROUP_ID}
+
+      # Secrets
+      - CRON_SECRET=${CRON_SECRET}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+
+      # Environment
+      - NODE_ENV=production
+    env_file:
+      - .env
+    networks:
+      - tlgrupos-network
+    volumes:
+      # Logs persistentes
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/stats"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Cron Job Runner (opcional - para automação)
+  tlgrupos-cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tlgrupos-cron
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_GROUP_ID=${TELEGRAM_GROUP_ID}
+      - CRON_SECRET=${CRON_SECRET}
+      - NODE_ENV=production
+    env_file:
+      - .env
+    networks:
+      - tlgrupos-network
+    volumes:
+      - ./logs:/app/logs
+    # Cron jobs usando crond do Alpine
+    command: >
+      sh -c "
+        apk add --no-cache dcron &&
+        echo '0 9 * * * cd /app && npx tsx scripts/send-expiry-notifications.ts >> /app/logs/notifications.log 2>&1' > /etc/crontabs/root &&
+        echo '0 0 * * * cd /app && npx tsx scripts/check-expired-members.ts >> /app/logs/expired.log 2>&1' >> /etc/crontabs/root &&
+        crond -f -l 2
+      "
+    depends_on:
+      - tlgrupos
+
+networks:
+  tlgrupos-network:
+    driver: bridge
+
+volumes:
+  logs:
