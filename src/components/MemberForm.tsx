@@ -437,3 +437,4 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
     </div>
   );
 }
+// Component for member form management
