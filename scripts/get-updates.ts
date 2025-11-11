@@ -28,7 +28,7 @@ async function getUpdates() {
     console.log('🔍 Buscando últimas atualizações do bot...\n');
 
     // Buscar últimas atualizações
-    const updates = await bot.telegram.getUpdates(0, 100);
+    const updates = await bot.telegram.getUpdates();
 
     if (updates.length === 0) {
       console.log('⚠️  Nenhuma atualização encontrada.');

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Buscar membros baseado no modo
     if (mode === 'admins') {
       const result = await getGroupAdministrators();
-      if (!result.success) {
+      if (!result.success || !result.data) {
         return NextResponse.json(
           {
             success: false,
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       members = result.data.filter(admin => !admin.is_bot);
     } else if (mode === 'ids') {
       const result = await getGroupMembersByIds(ids);
-      if (!result.success) {
+      if (!result.success || !result.data) {
         return NextResponse.json(
           {
             success: false,

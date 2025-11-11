@@ -163,7 +163,7 @@ export async function createMember(input: CreateMemberInput & { dias_acesso?: nu
   let inviteLink = null;
   let linkType: 'unique' | 'generic' | null = null;
 
-  if (input.telegram_user_id) {
+  if (input.telegram_user_id && dataVencimento) {
     const linkResult = await createInviteLink(
       input.telegram_user_id,
       new Date(dataVencimento)

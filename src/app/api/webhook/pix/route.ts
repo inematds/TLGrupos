@@ -89,14 +89,14 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('members')
       .update({ invite_link: inviteLink.invite_link })
-      .eq('id', membro.id);
+      .eq('id', membro.member.id);
 
     // Atualizar cadastro como processado
     await supabase
       .from('cadastros_pendentes')
       .update({
         status: 'processado',
-        membro_id: membro.id,
+        membro_id: membro.member.id,
         processado_em: new Date().toISOString(),
         invite_link: inviteLink.invite_link,
       })
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: {
         cadastro_id: cadastro.id,
-        membro_id: membro.id,
+        membro_id: membro.member.id,
         invite_link: inviteLink.invite_link,
       },
     });
