@@ -19,7 +19,8 @@ import {
   Link as LinkIcon,
   Tag,
   CheckCircle,
-  FileText
+  FileText,
+  Layers
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -43,6 +44,12 @@ export default function Sidebar() {
       icon: UserPlus,
       href: '/dashboard/new',
       description: 'Cadastrar manualmente',
+    },
+    {
+      title: 'Grupos Telegram',
+      icon: Layers,
+      href: '/dashboard/grupos',
+      description: 'Gerenciar grupos',
     },
     {
       title: 'Inclusão no Grupo',
@@ -174,4 +181,4 @@ export default function Sidebar() {
     </aside>
   );
 }
-// Component for sidebar navigation
+// Component for sidebar navigation - updated

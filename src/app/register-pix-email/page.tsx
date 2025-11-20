@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Mail, Phone, CheckCircle, Clock, Copy } from 'lucide-react';
 import QRCode from 'qrcode';
+import { createStaticPix } from 'pix-utils';
 import PlanSelector from '@/components/PlanSelector';
 import { Plan } from '@/types';
 
@@ -11,10 +12,12 @@ type Step = 'dados' | 'pagamento' | 'aguardando';
 export default function RegisterPixEmailPage() {
   const [step, setStep] = useState<Step>('dados');
   const [loading, setLoading] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(true);
   const [cadastroId, setCadastroId] = useState('');
   const [qrCodeUrl, setQrCodeUrl] = useState('');
-  const [pixKey] = useState('inemapix@gmail.com');
-  const [emailComprovantes] = useState('comprovantes@tlgrupos.com');
+  const [pixKey, setPixKey] = useState('');
+  const [emailComprovantes, setEmailComprovantes] = useState('');
+  const [codigoReferencia, setCodigoReferencia] = useState('');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
@@ -26,20 +29,33 @@ export default function RegisterPixEmailPage() {
     plan_id: '',
   });
 
-  // Buscar planos disponíveis
+  // Buscar planos disponíveis e configuração PIX
   useEffect(() => {
-    async function fetchPlans() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/plans?ativos=true');
-        const data = await res.json();
-        if (data.success) {
-          setPlans(data.data);
+        // Buscar planos
+        const plansRes = await fetch('/api/plans?ativos=true');
+        const plansData = await plansRes.json();
+        if (plansData.success) {
+          setPlans(plansData.data);
+        }
+
+        // Buscar configuração PIX
+        const configRes = await fetch('/api/forma-pagamentos?tipo=pix&ativo=true');
+        const configData = await configRes.json();
+        if (configData.success && configData.data.length > 0) {
+          const config = configData.data[0];
+          setPixKey(config.chave_pix || '');
+          setEmailComprovantes(config.email_comprovantes || '');
+          setCodigoReferencia(config.codigo_referencia || '');
         }
       } catch (error) {
-        console.error('Erro ao buscar planos:', error);
+        console.error('Erro ao buscar dados:', error);
+      } finally {
+        setLoadingConfig(false);
       }
     }
-    fetchPlans();
+    fetchData();
   }, []);
 
   function handlePlanSelect(planId: string, plan: Plan) {
@@ -60,19 +76,51 @@ export default function RegisterPixEmailPage() {
       return;
     }
 
+    console.log('🔍 Dados ao submeter:', {
+      pixKey,
+      emailComprovantes,
+      codigoReferencia,
+      selectedPlan,
+      plano_valor: selectedPlan?.valor
+    });
+
     setStep('pagamento');
     generateQRCode();
   }
 
   async function generateQRCode() {
-    if (!selectedPlan) return;
+    if (!selectedPlan || !pixKey) {
+      console.log('❌ Faltam dados:', { selectedPlan, pixKey });
+      return;
+    }
 
-    // Gerar QR Code PIX (simplificado - idealmente usar biblioteca específica)
-    const valor = selectedPlan.valor.toFixed(2);
-    const pixPayload = `00020126580014br.gov.bcb.pix0136${pixKey}52040000530398654${valor}5802BR5925TLGrupos6009SAO PAULO62070503***6304`;
+    const valor = selectedPlan.valor;
+    const referencia = codigoReferencia || 'TLGRUPOS';
+
+    console.log('📊 Gerando QR Code PIX com pix-utils:', {
+      pixKey,
+      valor,
+      referencia,
+      merchantName: 'TLGrupos',
+      merchantCity: 'SAO PAULO'
+    });
 
     try {
-      const url = await QRCode.toDataURL(pixPayload);
+      // Usar biblioteca pix-utils para gerar payload correto
+      const pixPayload = createStaticPix({
+        merchantName: 'TLGrupos',
+        merchantCity: 'SAO PAULO',
+        pixKey: pixKey,
+        infoAdicional: referencia,
+        transactionAmount: valor,
+      });
+
+      console.log('✅ Payload PIX gerado pela lib:', pixPayload.toBRCode());
+      console.log('📱 Testando no app do banco - deve aparecer:');
+      console.log('   Chave:', pixKey);
+      console.log('   Valor: R$', valor.toFixed(2));
+
+      const url = await QRCode.toDataURL(pixPayload.toBRCode());
       setQrCodeUrl(url);
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);
@@ -123,6 +171,16 @@ export default function RegisterPixEmailPage() {
     } catch (error) {
       alert('Erro ao copiar');
     }
+  }
+
+  if (loadingConfig) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden p-8">
+          <div className="text-center py-8 text-gray-500">Carregando configurações...</div>
+        </div>
+      </div>
+    );
   }
 
   return (

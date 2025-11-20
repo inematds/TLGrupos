@@ -5,13 +5,18 @@ import { CreditCard, QrCode, Mail, Upload, CheckCircle, UserPlus, Tag, Calendar,
 import { Plan } from '@/types';
 
 export default function PagamentosPage() {
-  const [pixKey, setPixKey] = useState('inemapix@gmail.com');
+  const [pixKey, setPixKey] = useState('');
+  const [emailComprovantes, setEmailComprovantes] = useState('');
+  const [codigoReferencia, setCodigoReferencia] = useState('');
+  const [formaPagamentoId, setFormaPagamentoId] = useState('');
   const [saved, setSaved] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(true);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
   useEffect(() => {
     buscarPlanos();
+    buscarConfigPix();
   }, []);
 
   async function buscarPlanos() {
@@ -25,6 +30,24 @@ export default function PagamentosPage() {
       console.error('Erro ao buscar planos:', error);
     } finally {
       setLoadingPlans(false);
+    }
+  }
+
+  async function buscarConfigPix() {
+    try {
+      const res = await fetch('/api/forma-pagamentos?tipo=pix&ativo=true');
+      const data = await res.json();
+      if (data.success && data.data.length > 0) {
+        const config = data.data[0]; // Pega a primeira configuração PIX ativa
+        setFormaPagamentoId(config.id);
+        setPixKey(config.chave_pix || '');
+        setEmailComprovantes(config.email_comprovantes || '');
+        setCodigoReferencia(config.codigo_referencia || '');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar configuração PIX:', error);
+    } finally {
+      setLoadingConfig(false);
     }
   }
 
@@ -99,10 +122,50 @@ export default function PagamentosPage() {
     return cores[cor] || 'text-gray-500';
   }
 
-  function salvarConfiguracao() {
-    // Aqui você salvaria no banco via API
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  async function salvarConfiguracao() {
+    try {
+      // Se não tem ID, criar novo registro. Se tem ID, atualizar.
+      const isUpdate = !!formaPagamentoId;
+
+      const body = isUpdate
+        ? {
+            id: formaPagamentoId,
+            chave_pix: pixKey,
+            email_comprovantes: emailComprovantes,
+            codigo_referencia: codigoReferencia,
+          }
+        : {
+            tipo: 'pix',
+            nome: 'PIX Principal',
+            ativo: true,
+            chave_pix: pixKey,
+            tipo_chave: 'email',
+            email_comprovantes: emailComprovantes,
+            codigo_referencia: codigoReferencia,
+            descricao: 'Configuração PIX para recebimento de pagamentos',
+            ordem: 1,
+          };
+
+      const res = await fetch('/api/forma-pagamentos', {
+        method: isUpdate ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        if (!isUpdate && data.data?.id) {
+          setFormaPagamentoId(data.data.id);
+        }
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        alert(`Erro ao salvar: ${data.error}`);
+      }
+    } catch (error: any) {
+      alert(`Erro ao salvar: ${error.message}`);
+    }
   }
 
   return (
@@ -189,32 +252,67 @@ export default function PagamentosPage() {
             <CreditCard className="w-6 h-6 text-blue-600 mr-2" />
             <h2 className="text-lg font-semibold text-gray-900">Configuração PIX</h2>
           </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Chave PIX (Email)
-              </label>
-              <input
-                type="email"
-                value={pixKey}
-                onChange={(e) => setPixKey(e.target.value)}
-                className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="seuemail@exemplo.com"
-              />
-            </div>
-            <button
-              onClick={salvarConfiguracao}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Salvar Configuração
-            </button>
-            {saved && (
-              <div className="text-sm text-green-600 flex items-center">
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Configuração salva com sucesso!
+
+          {loadingConfig ? (
+            <div className="text-center py-4 text-gray-500">Carregando configuração...</div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chave PIX (Email) *
+                </label>
+                <input
+                  type="email"
+                  value={pixKey}
+                  onChange={(e) => setPixKey(e.target.value)}
+                  className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="seuemail@exemplo.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">Esta chave será usada para gerar o QR Code PIX</p>
               </div>
-            )}
-          </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email para Receber Comprovantes *
+                </label>
+                <input
+                  type="email"
+                  value={emailComprovantes}
+                  onChange={(e) => setEmailComprovantes(e.target.value)}
+                  className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="comprovantes@exemplo.com"
+                />
+                <p className="text-xs text-gray-500 mt-1">Clientes enviarão comprovantes para este email</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Código de Referência
+                </label>
+                <input
+                  type="text"
+                  value={codigoReferencia}
+                  onChange={(e) => setCodigoReferencia(e.target.value)}
+                  className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="TLGRUPOS"
+                />
+                <p className="text-xs text-gray-500 mt-1">Prefixo usado para identificar pagamentos</p>
+              </div>
+
+              <button
+                onClick={salvarConfiguracao}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Salvar Configuração
+              </button>
+              {saved && (
+                <div className="text-sm text-green-600 flex items-center">
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Configuração salva com sucesso!
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Grid de Formas de Pagamento */}

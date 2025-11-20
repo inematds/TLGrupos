@@ -10,6 +10,10 @@ export default function AutoRemovalPage() {
   const [schedule, setSchedule] = useState({ hour: '00', minute: '00' });
   const [expiredMembers, setExpiredMembers] = useState<any[]>([]);
 
+  // Estados para grupos
+  const [groups, setGroups] = useState<any[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(true);
+
   // Novos estados para membros não cadastrados
   const [loadingUnregistered, setLoadingUnregistered] = useState(false);
   const [executingUnregistered, setExecutingUnregistered] = useState(false);
@@ -17,9 +21,24 @@ export default function AutoRemovalPage() {
   const [unregisteredMembers, setUnregisteredMembers] = useState<any[]>([]);
 
   useEffect(() => {
+    fetchGroups();
     fetchExpiredMembers();
     fetchUnregisteredMembers();
   }, []);
+
+  async function fetchGroups() {
+    try {
+      const res = await fetch('/api/telegram-groups?ativo=true');
+      const data = await res.json();
+      if (data.success && data.data.length > 0) {
+        setGroups(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar grupos:', error);
+    } finally {
+      setLoadingGroups(false);
+    }
+  }
 
   async function fetchExpiredMembers() {
     setLoading(true);
@@ -116,8 +135,29 @@ export default function AutoRemovalPage() {
     }
   }
 
-  function saveSchedule() {
-    alert(`Horário salvo: ${schedule.hour}:${schedule.minute}\n\nNota: Para aplicar o agendamento, configure o cron job no sistema.`);
+  async function saveScheduleForGroup(groupId: string, groupName: string, hour: string, minute: string) {
+    try {
+      const res = await fetch('/api/telegram-groups', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: groupId,
+          removal_schedule_hour: parseInt(hour),
+          removal_schedule_minute: parseInt(minute),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        alert(`✅ Horário salvo para o grupo "${groupName}": ${hour}:${minute}\n\nNota: Para aplicar o agendamento, configure o cron job no sistema.`);
+        await fetchGroups(); // Recarregar grupos
+      } else {
+        alert(`❌ Erro ao salvar: ${data.error}`);
+      }
+    } catch (error: any) {
+      alert(`❌ Erro: ${error.message}`);
+    }
   }
 
   return (
@@ -137,7 +177,129 @@ export default function AutoRemovalPage() {
         </div>
       </header>
 
-      <main className="px-8 py-8 max-w-6xl">
+      <main className="px-8 py-8 max-w-7xl">
+        {/* Lista de Grupos */}
+        {loadingGroups ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <p className="text-gray-500">Carregando grupos...</p>
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="bg-yellow-50 rounded-lg border border-yellow-300 p-6 mb-6">
+            <p className="text-yellow-800">
+              ⚠️ Nenhum grupo Telegram configurado. Configure um grupo primeiro.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Grupos Telegram Configurados</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Configure o horário de auto-remoção para cada grupo individualmente
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+              {groups.map((group) => {
+                const [localHour, setLocalHour] = useState(String(group.removal_schedule_hour || 0).padStart(2, '0'));
+                const [localMinute, setLocalMinute] = useState(String(group.removal_schedule_minute || 0).padStart(2, '0'));
+
+                return (
+                  <div key={group.id} className="bg-gray-50 rounded-lg border border-gray-200 p-6">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          {group.nome}
+                        </h3>
+                        {group.ativo ? (
+                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
+                            Ativo
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded">
+                            Inativo
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1 text-sm text-gray-600">
+                        <p>
+                          <strong>ID Telegram:</strong>{' '}
+                          <code className="bg-white px-2 py-1 rounded border border-gray-300 text-xs">
+                            {group.telegram_group_id}
+                          </code>
+                        </p>
+                        {group.descricao && (
+                          <p>
+                            <strong>Descrição:</strong> {group.descricao}
+                          </p>
+                        )}
+                        <p>
+                          <strong>Auto-Remoção:</strong>{' '}
+                          {group.auto_removal_enabled ? (
+                            <span className="text-green-700 font-medium">✅ Habilitada</span>
+                          ) : (
+                            <span className="text-red-700 font-medium">❌ Desabilitada</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Configuração de Horário */}
+                    <div className="mt-4 pt-4 border-t border-gray-300">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        Horário de Auto-Remoção
+                      </h4>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Hora</label>
+                          <select
+                            value={localHour}
+                            onChange={(e) => setLocalHour(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map((h) => (
+                              <option key={h} value={h}>{h}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Minuto</label>
+                          <select
+                            value={localMinute}
+                            onChange={(e) => setLocalMinute(e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {['00', '15', '30', '45'].map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">&nbsp;</label>
+                          <button
+                            onClick={() => saveScheduleForGroup(group.id, group.nome, localHour, localMinute)}
+                            className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                          >
+                            Salvar
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-gray-500 mt-2">
+                        Horário atual: <strong>{String(group.removal_schedule_hour).padStart(2, '0')}:{String(group.removal_schedule_minute).padStart(2, '0')}</strong>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -322,66 +484,6 @@ export default function AutoRemovalPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Schedule Configuration */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            <Clock className="inline w-6 h-6 mr-2 text-blue-600" />
-            Configurar Horário Automático
-          </h2>
-          <p className="text-sm text-gray-600 mb-6">
-            Defina o horário em que a remoção automática deve ser executada diariamente.
-          </p>
-
-          <div className="flex items-center gap-4 mb-4">
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hora</label>
-              <select
-                value={schedule.hour}
-                onChange={(e) => setSchedule({ ...schedule, hour: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Minuto</label>
-              <select
-                value={schedule.minute}
-                onChange={(e) => setSchedule({ ...schedule, minute: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {['00', '15', '30', '45'].map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex-1 flex items-end">
-              <button
-                onClick={saveSchedule}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Salvar Horário
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              <strong>📋 Nota:</strong> O horário é salvo localmente. Para ativar a execução
-              automática, você precisa configurar um <strong>Cron Job</strong> no sistema
-              operacional ou usar o Vercel Cron (já configurado no <code>vercel.json</code>).
-            </p>
           </div>
         </div>
 
