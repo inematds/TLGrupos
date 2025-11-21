@@ -13,6 +13,7 @@ Este diretório contém toda a documentação técnica e guias do sistema TLGrup
 - [COMO_USAR_O_BOT.md](./COMO_USAR_O_BOT.md) - Guia de uso do bot
 - [COMO_ADICIONAR_BOT_EM_GRUPOS.md](./COMO_ADICIONAR_BOT_EM_GRUPOS.md) - Como adicionar o bot em grupos
 - [CONFIGURAR_MULTIPLOS_GRUPOS.md](./CONFIGURAR_MULTIPLOS_GRUPOS.md) - Configuração de múltiplos grupos simultaneamente
+- [GUIA_RAPIDO_ALTERAR_GRUPOS.md](./GUIA_RAPIDO_ALTERAR_GRUPOS.md) - ⚡ Checklist rápido para alterar grupos
 - [AUTO_REGISTRO_TELEGRAM_COMPLETO.md](./AUTO_REGISTRO_TELEGRAM_COMPLETO.md) - Sistema de auto-registro
 - [COMANDO_CADASTRO_TELEGRAM.md](./COMANDO_CADASTRO_TELEGRAM.md) - Comandos de cadastro
 - [VINCULACAO_TELEGRAM_ID.md](./VINCULACAO_TELEGRAM_ID.md) - Vinculação de IDs do Telegram
