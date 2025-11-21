@@ -9,7 +9,18 @@ if (!process.env.TELEGRAM_GROUP_ID) {
 }
 
 export const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
-export const GROUP_ID = parseInt(process.env.TELEGRAM_GROUP_ID);
+
+// Suporte a múltiplos grupos: pode ser um ID único ou vários separados por vírgula
+// Exemplo: -1002414487357 ou -1002414487357,-1002345678901
+export const GROUP_IDS = process.env.TELEGRAM_GROUP_ID
+  .split(',')
+  .map(id => parseInt(id.trim()))
+  .filter(id => !isNaN(id));
+
+// Manter GROUP_ID para compatibilidade (usa o primeiro grupo da lista)
+export const GROUP_ID = GROUP_IDS[0];
+
+console.log(`📱 Bot configurado para ${GROUP_IDS.length} grupo(s):`, GROUP_IDS);
 
 // Tipos úteis
 export interface TelegramUser {

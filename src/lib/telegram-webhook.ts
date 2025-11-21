@@ -13,8 +13,17 @@ if (!process.env.TELEGRAM_GROUP_ID) {
 }
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
-const GROUP_ID = parseInt(process.env.TELEGRAM_GROUP_ID);
+
+// Suporte a múltiplos grupos
+const GROUP_IDS = process.env.TELEGRAM_GROUP_ID!
+  .split(',')
+  .map(id => parseInt(id.trim()))
+  .filter(id => !isNaN(id));
+
+const GROUP_ID = GROUP_IDS[0]; // Manter compatibilidade
 const supabase = getServiceSupabase();
+
+console.log(`🤖 [Webhook] Monitorando ${GROUP_IDS.length} grupo(s):`, GROUP_IDS);
 
 // Configuração padrão
 const DEFAULT_EXPIRY_DAYS = 30;
@@ -96,8 +105,8 @@ async function autoRegisterMember(
 bot.on('new_chat_members', async (ctx) => {
   const chatId = ctx.chat.id;
 
-  // Só processar se for o grupo monitorado
-  if (chatId !== GROUP_ID) return;
+  // Só processar se for um dos grupos monitorados
+  if (!GROUP_IDS.includes(chatId)) return;
 
   const newMembers = ctx.message.new_chat_members;
 
@@ -262,8 +271,8 @@ bot.on('new_chat_members', async (ctx) => {
 bot.on('left_chat_member', async (ctx) => {
   const chatId = ctx.chat.id;
 
-  // Só processar se for o grupo monitorado
-  if (chatId !== GROUP_ID) return;
+  // Só processar se for um dos grupos monitorados
+  if (!GROUP_IDS.includes(chatId)) return;
 
   const leftMember = ctx.message.left_chat_member;
 
@@ -595,8 +604,8 @@ bot.command('status', async (ctx) => {
 bot.on(message('text'), async (ctx) => {
   const chatId = ctx.chat.id;
 
-  // Só processar se for o grupo monitorado
-  if (chatId !== GROUP_ID) return;
+  // Só processar se for um dos grupos monitorados
+  if (!GROUP_IDS.includes(chatId)) return;
 
   const user = ctx.from;
 
