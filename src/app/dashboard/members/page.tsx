@@ -59,8 +59,18 @@ export default function MembersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome: editingMember.nome,
-          email: editingMember.email || '',
-          telefone: editingMember.telefone || '',
+          email: editingMember.email || null,
+          telefone: editingMember.telefone || null,
+          cidade: editingMember.cidade || null,
+          uf: editingMember.uf || null,
+          data_nascimento: editingMember.data_nascimento ? formatDateForSave(editingMember.data_nascimento) : null,
+          nicho: editingMember.nicho || null,
+          interesse: editingMember.interesse || null,
+          grupo_favorito: editingMember.grupo_favorito || null,
+          telegram_username: editingMember.telegram_username || null,
+          telegram_first_name: editingMember.telegram_first_name || null,
+          telegram_last_name: editingMember.telegram_last_name || null,
+          observacoes: editingMember.observacoes || null,
           data_entrada: formatDateForSave(editingMember.data_entrada),
           data_vencimento: formatDateForSave(editingMember.data_vencimento),
           status: editingMember.status,
@@ -358,59 +368,22 @@ export default function MembersPage() {
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Editar Membro</h2>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome Completo *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingMember.nome}
-                    onChange={(e) =>
-                      setEditingMember({ ...editingMember, nome: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+              <div className="space-y-6">
+                {/* Informações Básicas */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Informações Básicas
+                  </h3>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={editingMember.email || ''}
-                    onChange={(e) =>
-                      setEditingMember({ ...editingMember, email: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Telefone
-                  </label>
-                  <input
-                    type="text"
-                    value={editingMember.telefone || ''}
-                    onChange={(e) =>
-                      setEditingMember({ ...editingMember, telefone: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Data de Entrada *
+                      Nome Completo *
                     </label>
                     <input
-                      type="date"
-                      value={editingMember.data_entrada.split('T')[0]}
+                      type="text"
+                      value={editingMember.nome}
                       onChange={(e) =>
-                        setEditingMember({ ...editingMember, data_entrada: e.target.value })
+                        setEditingMember({ ...editingMember, nome: e.target.value })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -418,44 +391,278 @@ export default function MembersPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Data de Vencimento *
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={editingMember.email || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, email: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Telefone
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.telefone || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, telefone: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cidade
+                      </label>
+                      <input
+                        type="text"
+                        value={editingMember.cidade || ''}
+                        onChange={(e) =>
+                          setEditingMember({ ...editingMember, cidade: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        UF
+                      </label>
+                      <select
+                        value={editingMember.uf || ''}
+                        onChange={(e) =>
+                          setEditingMember({ ...editingMember, uf: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">--</option>
+                        {['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'].map(uf => (
+                          <option key={uf} value={uf}>{uf}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Data de Nascimento
                     </label>
                     <input
                       type="date"
-                      value={editingMember.data_vencimento.split('T')[0]}
+                      value={editingMember.data_nascimento ? editingMember.data_nascimento.split('T')[0] : ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, data_nascimento: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nicho / Área de Atuação
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.nicho || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, nicho: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: Marketing Digital, E-commerce..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Principais Interesses
+                    </label>
+                    <textarea
+                      value={editingMember.interesse || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, interesse: e.target.value })
+                      }
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Conte sobre os principais interesses..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Grupo Favorito
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.grupo_favorito || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, grupo_favorito: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Nome do grupo favorito no Telegram"
+                    />
+                  </div>
+                </div>
+
+                {/* Informações do Telegram */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Informações do Telegram
+                  </h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Telegram User ID
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.telegram_user_id || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, telegram_user_id: parseInt(e.target.value) || null })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                      disabled
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      ID numérico do Telegram (somente leitura)
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Telegram Username
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.telegram_username || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, telegram_username: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="username (sem @)"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Telegram First Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.telegram_first_name || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, telegram_first_name: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Telegram Last Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editingMember.telegram_last_name || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, telegram_last_name: e.target.value })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Datas e Status */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Datas e Status
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Data de Entrada *
+                      </label>
+                      <input
+                        type="date"
+                        value={editingMember.data_entrada.split('T')[0]}
+                        onChange={(e) =>
+                          setEditingMember({ ...editingMember, data_entrada: e.target.value })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Data de Vencimento *
+                      </label>
+                      <input
+                        type="date"
+                        value={editingMember.data_vencimento.split('T')[0]}
+                        onChange={(e) =>
+                          setEditingMember({
+                            ...editingMember,
+                            data_vencimento: e.target.value,
+                          })
+                        }
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={editingMember.status}
                       onChange={(e) =>
                         setEditingMember({
                           ...editingMember,
-                          data_vencimento: e.target.value,
+                          status: e.target.value as 'ativo' | 'removido' | 'pausado' | 'erro_remocao',
                         })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                      <option value="ativo">Ativo</option>
+                      <option value="removido">Removido</option>
+                      <option value="pausado">Pausado</option>
+                      <option value="erro_remocao">Erro de Remoção</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Nota: 'Vencido' é calculado automaticamente pela data de vencimento
+                    </p>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={editingMember.status}
-                    onChange={(e) =>
-                      setEditingMember({
-                        ...editingMember,
-                        status: e.target.value as 'ativo' | 'removido' | 'pausado' | 'erro_remocao',
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="ativo">Ativo</option>
-                    <option value="removido">Removido</option>
-                    <option value="pausado">Pausado</option>
-                    <option value="erro_remocao">Erro de Remoção</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Nota: 'Vencido' é calculado automaticamente pela data de vencimento
-                  </p>
+                {/* Observações */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+                    Observações
+                  </h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Observações
+                    </label>
+                    <textarea
+                      value={editingMember.observacoes || ''}
+                      onChange={(e) =>
+                        setEditingMember({ ...editingMember, observacoes: e.target.value })
+                      }
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Notas adicionais sobre o membro..."
+                    />
+                  </div>
                 </div>
               </div>
 
