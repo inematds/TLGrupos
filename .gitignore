@@ -42,3 +42,9 @@ next-env.d.ts
 
 # Docker
 logs/
+
+# Vercel
+.vercel
+vercel.json
+vercel.json.with-crons
+.env.vercel*

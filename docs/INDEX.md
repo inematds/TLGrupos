@@ -6,7 +6,6 @@ Este diretório contém toda a documentação técnica e guias do sistema TLGrup
 
 ### 🚀 **Configuração e Deploy**
 - [SETUP.md](./SETUP.md) - Guia de configuração inicial do projeto
-- [DEPLOY_VERCEL.md](./DEPLOY_VERCEL.md) - Como fazer deploy na Vercel
 - [DOCKER.md](./DOCKER.md) - Configuração e uso com Docker
 - [INSTALL-COMPARISON.md](./INSTALL-COMPARISON.md) - Comparação de métodos de instalação
 
