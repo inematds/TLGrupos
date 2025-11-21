@@ -26,7 +26,8 @@ async function autoRegisterMember(
   userId: number,
   firstName: string,
   lastName?: string,
-  username?: string
+  username?: string,
+  chatId?: number
 ) {
   try {
     // Verificar se já existe
@@ -34,6 +35,21 @@ async function autoRegisterMember(
     if (existing) {
       console.log(`[Auto-Register] Membro ${firstName} já cadastrado`);
       return { success: true, alreadyExists: true };
+    }
+
+    // Buscar group_id baseado no telegram_group_id (chatId)
+    let groupId = null;
+    if (chatId) {
+      const { data: groupData } = await supabase
+        .from('telegram_groups')
+        .select('id')
+        .eq('telegram_group_id', chatId.toString())
+        .single();
+
+      if (groupData) {
+        groupId = groupData.id;
+        console.log(`[Auto-Register] Grupo encontrado: ${groupId}`);
+      }
     }
 
     // Calcular data de vencimento
@@ -49,6 +65,7 @@ async function autoRegisterMember(
       nome: `${firstName}${lastName ? ' ' + lastName : ''}`,
       data_vencimento: expiryDate.toISOString(),
       status: 'ativo',
+      group_id: groupId, // Registrar grupo de origem
     }).select().single();
 
     if (error) {
@@ -170,7 +187,8 @@ bot.on('new_chat_members', async (ctx) => {
         member.id,
         member.first_name,
         member.last_name,
-        member.username
+        member.username,
+        chatId // Registrar grupo de origem
       );
 
       if (result.success && !result.alreadyExists) {
@@ -243,25 +261,46 @@ bot.on('left_chat_member', async (ctx) => {
 });
 
 /**
- * Handler para mensagens no grupo (auto-captura)
+ * Comando /cadastro - Envia link personalizado para cadastro completo
  */
-bot.on(message('text'), async (ctx) => {
-  const chatId = ctx.chat.id;
-
-  // Só processar se for o grupo monitorado
-  if (chatId !== GROUP_ID) return;
-
+bot.command('cadastro', async (ctx) => {
   const user = ctx.from;
 
-  // Ignorar bots
-  if (user.is_bot) return;
+  console.log(`[Comando] /cadastro de ${user.first_name} (${user.id})`);
 
-  // Auto-registrar (silenciosamente se já existir)
-  await autoRegisterMember(
-    user.id,
-    user.first_name,
-    user.last_name,
-    user.username
+  // Gerar URL de cadastro com o telegram_id
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://192.168.1.91:3000';
+  const cadastroUrl = `${baseUrl}/cadastro?telegram_id=${user.id}&username=${user.username || ''}&nome=${encodeURIComponent(user.first_name + (user.last_name ? ' ' + user.last_name : ''))}`;
+
+  const mensagemTexto =
+    `📝 Cadastro Completo\n\n` +
+    `Olá ${user.first_name}! 👋\n\n` +
+    `Para completar seu cadastro, COPIE e COLE o link abaixo no navegador:\n\n` +
+    `${cadastroUrl}\n\n` +
+    `📱 Ou toque LONGO no link acima e escolha "Abrir"\n\n` +
+    `✅ Seus dados do Telegram já estão vinculados!\n` +
+    `📋 Basta preencher suas informações pessoais.\n` +
+    `⚡ O processo leva menos de 2 minutos!`;
+
+  // Calcular posição do link na mensagem
+  const linkInicio = mensagemTexto.indexOf(cadastroUrl);
+  const linkFim = linkInicio + cadastroUrl.length;
+
+  // Enviar com entities para forçar link clicável
+  await ctx.telegram.sendMessage(
+    ctx.chat.id,
+    mensagemTexto,
+    {
+      reply_to_message_id: ctx.message.message_id,
+      entities: [
+        {
+          type: 'text_link',
+          offset: linkInicio,
+          length: cadastroUrl.length,
+          url: cadastroUrl
+        }
+      ]
+    }
   );
 });
 
@@ -297,7 +336,8 @@ bot.command('registrar', async (ctx) => {
     user.id,
     user.first_name,
     user.last_name,
-    user.username
+    user.username,
+    chatId // Registrar grupo de origem
   );
 
   if (result.success) {
@@ -505,6 +545,31 @@ bot.command('status', async (ctx) => {
     `${diasRestantes <= 7 && diasRestantes > 0 ? '⚠️ Seu acesso está próximo de vencer!\n' : ''}` +
     `${diasRestantes < 0 ? '❌ Seu acesso está vencido. Solicite renovação.\n' : ''}`,
     { reply_to_message_id: ctx.message.message_id }
+  );
+});
+
+/**
+ * Handler para mensagens no grupo (auto-captura)
+ * IMPORTANTE: Deve estar DEPOIS de todos os comandos
+ */
+bot.on(message('text'), async (ctx) => {
+  const chatId = ctx.chat.id;
+
+  // Só processar se for o grupo monitorado
+  if (chatId !== GROUP_ID) return;
+
+  const user = ctx.from;
+
+  // Ignorar bots
+  if (user.is_bot) return;
+
+  // Auto-registrar (silenciosamente se já existir)
+  await autoRegisterMember(
+    user.id,
+    user.first_name,
+    user.last_name,
+    user.username,
+    chatId // Registrar grupo de origem
   );
 });
 

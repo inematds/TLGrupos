@@ -3,10 +3,19 @@
 import { useEffect, useState } from 'react';
 import { Member, Stats } from '@/types';
 import MemberForm from '@/components/MemberForm';
-import { Plus } from 'lucide-react';
+import { Plus, DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+
+interface PaymentStats {
+  total: number;
+  pendentes: number;
+  aprovados: number;
+  valorTotal: number;
+  valorMesAtual: number;
+}
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [paymentStats, setPaymentStats] = useState<PaymentStats | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('requer_atencao');
@@ -16,7 +25,7 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchData();
 
-    // Atualizar estatísticas a cada 30 segundos (sem mostrar loading)
+    // Atualizar estatísticas a cada 30 segundos
     const interval = setInterval(() => {
       fetchData(false);
     }, 30000);
@@ -30,11 +39,42 @@ export default function DashboardPage() {
     }
 
     try {
-      // Buscar estatísticas
+      // Buscar estatísticas de membros
       const statsRes = await fetch('/api/stats');
       const statsData = await statsRes.json();
       if (statsData.success) {
         setStats(statsData.data);
+      }
+
+      // Buscar estatísticas de pagamentos
+      try {
+        const paymentsRes = await fetch('/api/payments');
+        const paymentsData = await paymentsRes.json();
+
+        if (paymentsRes.ok && paymentsData.payments) {
+          const payments = paymentsData.payments;
+          const now = new Date();
+          const mesAtual = now.getMonth();
+          const anoAtual = now.getFullYear();
+
+          setPaymentStats({
+            total: payments.length,
+            pendentes: payments.filter((p: any) => p.status === 'pendente').length,
+            aprovados: payments.filter((p: any) => p.status === 'aprovado').length,
+            valorTotal: payments
+              .filter((p: any) => p.status === 'aprovado')
+              .reduce((sum: number, p: any) => sum + parseFloat(p.valor), 0),
+            valorMesAtual: payments
+              .filter((p: any) => {
+                if (p.status !== 'aprovado') return false;
+                const dataAprovacao = new Date(p.data_aprovacao || p.created_at);
+                return dataAprovacao.getMonth() === mesAtual && dataAprovacao.getFullYear() === anoAtual;
+              })
+              .reduce((sum: number, p: any) => sum + parseFloat(p.valor), 0),
+          });
+        }
+      } catch (error) {
+        console.log('Tabela de pagamentos ainda não existe');
       }
 
       // Buscar membros
@@ -44,7 +84,6 @@ export default function DashboardPage() {
         setMembers(membersData.data);
       }
 
-      // Atualizar timestamp da última atualização
       setLastUpdate(new Date());
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -105,22 +144,16 @@ export default function DashboardPage() {
               </div>
               <div className="flex gap-3">
                 <a
-                  href="/dashboard/formas-pagamento"
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+                  href="/dashboard/pagamentos-novo"
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
                 >
-                  💳 Pagamentos
+                  💰 Novo Pagamento
                 </a>
                 <a
                   href="/dashboard/convites"
                   className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
                 >
                   🔗 Convites
-                </a>
-                <a
-                  href="/dashboard/inclusao"
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                >
-                  Inclusão no Grupo
                 </a>
                 <button
                   onClick={() => setIsFormOpen(true)}
@@ -135,76 +168,221 @@ export default function DashboardPage() {
         </header>
 
         <main className="px-8 py-8">
-        {/* Estatísticas */}
+        {/* Estatísticas Principais */}
         {stats && (
           <>
-            {/* Linha 1: Total e Principais */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg p-6">
-                <h3 className="text-sm font-medium opacity-90">📊 Total de Cadastros</h3>
-                <p className="mt-2 text-4xl font-bold">{stats.total_cadastros}</p>
+            {/* Linha 1: Métricas Principais */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              {/* Total de Cadastros */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium opacity-90">Total de Cadastros</p>
+                    <p className="mt-2 text-4xl font-bold">{stats.total_cadastros}</p>
+                  </div>
+                  <Users className="w-12 h-12 opacity-80" />
+                </div>
               </div>
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
-                <h3 className="text-sm font-medium text-gray-500">✅ Ativos</h3>
-                <p className="mt-2 text-3xl font-bold text-green-600">{stats.total_ativos}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  No grupo: {stats.ativos_no_grupo || 0} | Fora: {stats.ativos_sem_grupo || 0}
-                </p>
+
+              {/* Ativos */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Membros Ativos</p>
+                    <p className="mt-2 text-4xl font-bold text-green-600">{stats.total_ativos}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {stats.ativos_no_grupo || 0} no grupo • {stats.ativos_sem_grupo || 0} fora
+                    </p>
+                  </div>
+                  <CheckCircle className="w-12 h-12 text-green-500 opacity-50" />
+                </div>
               </div>
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
-                <h3 className="text-sm font-medium text-gray-500">⚠️ Vencendo em 7 dias</h3>
-                <p className="mt-2 text-3xl font-bold text-yellow-600">{stats.vencendo_7dias}</p>
+
+              {/* Vencendo em 7 dias */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Vencendo em 7 dias</p>
+                    <p className="mt-2 text-4xl font-bold text-yellow-600">{stats.vencendo_7dias}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Requer renovação em breve
+                    </p>
+                  </div>
+                  <Clock className="w-12 h-12 text-yellow-500 opacity-50" />
+                </div>
               </div>
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
-                <h3 className="text-sm font-medium text-gray-500">❌ Vencidos</h3>
-                <p className="mt-2 text-3xl font-bold text-red-600">{stats.total_vencidos}</p>
+
+              {/* Vencidos */}
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Vencidos</p>
+                    <p className="mt-2 text-4xl font-bold text-red-600">{stats.total_vencidos}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Acesso expirado
+                    </p>
+                  </div>
+                  <AlertTriangle className="w-12 h-12 text-red-500 opacity-50" />
+                </div>
               </div>
             </div>
 
-            {/* Linha 2: Status Especiais */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-orange-500">
-                <h3 className="text-sm font-medium text-gray-500">🔴 Erro Remoção</h3>
+            {/* Linha 2: Estatísticas de Pagamentos */}
+            {paymentStats && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                {/* Receita Total */}
+                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium opacity-90">Receita Total</p>
+                      <p className="mt-2 text-3xl font-bold">
+                        R$ {paymentStats.valorTotal.toFixed(2)}
+                      </p>
+                      <p className="text-xs opacity-75 mt-1">
+                        {paymentStats.aprovados} pagamentos aprovados
+                      </p>
+                    </div>
+                    <DollarSign className="w-12 h-12 opacity-80" />
+                  </div>
+                </div>
+
+                {/* Receita do Mês */}
+                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium opacity-90">Receita do Mês</p>
+                      <p className="mt-2 text-3xl font-bold">
+                        R$ {paymentStats.valorMesAtual.toFixed(2)}
+                      </p>
+                      <p className="text-xs opacity-75 mt-1">
+                        {new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-12 h-12 opacity-80" />
+                  </div>
+                </div>
+
+                {/* Pagamentos Pendentes */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Pendentes</p>
+                      <p className="mt-2 text-4xl font-bold text-yellow-600">
+                        {paymentStats.pendentes}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <a href="/dashboard/pagamentos-gerenciar" className="text-yellow-600 hover:underline">
+                          Aguardando aprovação →
+                        </a>
+                      </p>
+                    </div>
+                    <Clock className="w-12 h-12 text-yellow-500 opacity-50" />
+                  </div>
+                </div>
+
+                {/* Total de Pagamentos */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Total Pagamentos</p>
+                      <p className="mt-2 text-4xl font-bold text-blue-600">
+                        {paymentStats.total}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        Todos os registros
+                      </p>
+                    </div>
+                    <DollarSign className="w-12 h-12 text-blue-500 opacity-50" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Linha 3: Status Especiais e Alertas */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              {/* Erro Remoção */}
+              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-orange-500">
+                <h3 className="text-sm font-medium text-gray-500">Erro Remoção</h3>
                 <p className="mt-2 text-3xl font-bold text-orange-600">{stats.erro_remocao || 0}</p>
                 <p className="text-xs text-gray-500 mt-1">Vencidos ainda no grupo</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
-                <h3 className="text-sm font-medium text-gray-500">🗑️ Removidos</h3>
+
+              {/* Removidos */}
+              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-gray-500">
+                <h3 className="text-sm font-medium text-gray-500">Removidos</h3>
                 <p className="mt-2 text-3xl font-bold text-gray-600">{stats.total_removidos}</p>
+                <p className="text-xs text-gray-500 mt-1">Acesso revogado</p>
               </div>
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
-                <h3 className="text-sm font-medium text-gray-500">⏸️ Pausados</h3>
+
+              {/* Pausados */}
+              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-purple-500">
+                <h3 className="text-sm font-medium text-gray-500">Pausados</h3>
                 <p className="mt-2 text-3xl font-bold text-purple-600">{stats.total_pausados || 0}</p>
+                <p className="text-xs text-gray-500 mt-1">Temporariamente suspensos</p>
               </div>
+
+              {/* Requer Atenção */}
               {stats.ativos_mas_vencidos > 0 && (
-                <div className="bg-red-50 rounded-lg shadow p-6 border-l-4 border-red-700">
-                  <h3 className="text-sm font-medium text-red-700">🚨 Requer Atenção</h3>
+                <div className="bg-red-50 rounded-xl shadow p-6 border-l-4 border-red-700">
+                  <h3 className="text-sm font-medium text-red-700">Requer Atenção</h3>
                   <p className="mt-2 text-3xl font-bold text-red-700">{stats.ativos_mas_vencidos}</p>
                   <p className="text-xs text-red-600 mt-1">Ativos mas vencidos</p>
                 </div>
               )}
-            </div>
 
-            {/* Linha 3: Telegram User ID */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                <h3 className="text-sm font-medium text-gray-500">👤 Sem Telegram ID</h3>
-                <p className="mt-2 text-3xl font-bold text-blue-600">{stats.sem_telegram_user_id || 0}</p>
-                <p className="text-xs text-gray-500 mt-1">Total de membros</p>
-              </div>
-              <div className="bg-white rounded-lg shadow p-6 border-l-4 border-cyan-500">
-                <h3 className="text-sm font-medium text-gray-500">👤 Ativos sem Telegram ID</h3>
+              {/* Sem Telegram ID */}
+              <div className="bg-white rounded-xl shadow p-6 border-l-4 border-cyan-500">
+                <h3 className="text-sm font-medium text-gray-500">Sem Telegram ID</h3>
                 <p className="mt-2 text-3xl font-bold text-cyan-600">{stats.ativos_sem_telegram || 0}</p>
-                <p className="text-xs text-gray-500 mt-1">Apenas ativos</p>
+                <p className="text-xs text-gray-500 mt-1">Ativos sem vinculação</p>
               </div>
             </div>
           </>
         )}
 
+        {/* Ações Rápidas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <a
+            href="/dashboard/pagamentos-gerenciar"
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-green-500 text-center"
+          >
+            <div className="text-4xl mb-2">💰</div>
+            <h3 className="font-semibold text-gray-900">Gerenciar Pagamentos</h3>
+            <p className="text-sm text-gray-500 mt-1">Aprovar e visualizar</p>
+          </a>
+
+          <a
+            href="/dashboard/inclusao"
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-blue-500 text-center"
+          >
+            <div className="text-4xl mb-2">➕</div>
+            <h3 className="font-semibold text-gray-900">Incluir no Grupo</h3>
+            <p className="text-sm text-gray-500 mt-1">Enviar convites</p>
+          </a>
+
+          <a
+            href="/dashboard/groups"
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-purple-500 text-center"
+          >
+            <div className="text-4xl mb-2">👥</div>
+            <h3 className="font-semibold text-gray-900">Grupos Telegram</h3>
+            <p className="text-sm text-gray-500 mt-1">Gerenciar grupos</p>
+          </a>
+
+          <a
+            href="/dashboard/stats"
+            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-orange-500 text-center"
+          >
+            <div className="text-4xl mb-2">📊</div>
+            <h3 className="font-semibold text-gray-900">Estatísticas</h3>
+            <p className="text-sm text-gray-500 mt-1">Relatórios completos</p>
+          </a>
+        </div>
+
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow mb-6 p-4">
           <div className="flex gap-4 items-center">
-            <label className="font-medium text-gray-700">Filtrar por status:</label>
+            <label className="font-medium text-gray-700">Filtrar membros:</label>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
@@ -232,6 +410,11 @@ export default function DashboardPage() {
 
         {/* Tabela de Membros */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Membros Recentes ({members.length})
+            </h2>
+          </div>
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -258,8 +441,8 @@ export default function DashboardPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
-                    Nenhum membro encontrado
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    Nenhum membro encontrado com este filtro
                   </td>
                 </tr>
               ) : (
@@ -313,18 +496,6 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Informações de ajuda */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-lg font-medium text-blue-900 mb-2">Próximos Passos</h3>
-          <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
-            <li>Configure as variáveis de ambiente no arquivo .env.local</li>
-            <li>Execute as migrations no Supabase</li>
-            <li>Configure o bot Telegram e adicione-o como admin do grupo</li>
-            <li>Configure os cron jobs para automação</li>
-            <li>Adicione seus primeiros membros através da API</li>
-          </ul>
         </div>
       </main>
 

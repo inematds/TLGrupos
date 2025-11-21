@@ -5,6 +5,12 @@ import { X } from 'lucide-react';
 import PlanSelector from './PlanSelector';
 import { Plan } from '@/types';
 
+const UF_OPTIONS = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
 interface MemberFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +26,12 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
     plan_id: '',
     email: '',
     telefone: '',
+    cidade: '',
+    uf: '',
+    data_nascimento: '',
+    nicho: '',
+    interesse: '',
+    grupo_favorito: '',
     observacoes: '',
   });
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -92,6 +104,30 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
         dataToSend.telefone = formData.telefone.trim();
       }
 
+      if (formData.cidade.trim()) {
+        dataToSend.cidade = formData.cidade.trim();
+      }
+
+      if (formData.uf.trim()) {
+        dataToSend.uf = formData.uf.trim().toUpperCase();
+      }
+
+      if (formData.data_nascimento.trim()) {
+        dataToSend.data_nascimento = formData.data_nascimento.trim();
+      }
+
+      if (formData.nicho.trim()) {
+        dataToSend.nicho = formData.nicho.trim();
+      }
+
+      if (formData.interesse.trim()) {
+        dataToSend.interesse = formData.interesse.trim();
+      }
+
+      if (formData.grupo_favorito.trim()) {
+        dataToSend.grupo_favorito = formData.grupo_favorito.trim();
+      }
+
       if (formData.observacoes.trim()) {
         dataToSend.observacoes = formData.observacoes.trim();
       }
@@ -126,6 +162,12 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
         plan_id: '',
         email: '',
         telefone: '',
+        cidade: '',
+        uf: '',
+        data_nascimento: '',
+        nicho: '',
+        interesse: '',
+        grupo_favorito: '',
         observacoes: '',
       });
       setSelectedPlan(null);
@@ -151,6 +193,12 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
         plan_id: '',
         email: '',
         telefone: '',
+        cidade: '',
+        uf: '',
+        data_nascimento: '',
+        nicho: '',
+        interesse: '',
+        grupo_favorito: '',
         observacoes: '',
       });
       setSelectedPlan(null);
@@ -369,6 +417,104 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="+55 11 99999-9999"
+              />
+            </div>
+
+            {/* Cidade e UF */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-1">
+                  Cidade
+                </label>
+                <input
+                  type="text"
+                  id="cidade"
+                  name="cidade"
+                  value={formData.cidade}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="São Paulo"
+                />
+              </div>
+              <div>
+                <label htmlFor="uf" className="block text-sm font-medium text-gray-700 mb-1">
+                  UF
+                </label>
+                <select
+                  id="uf"
+                  name="uf"
+                  value={formData.uf}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">--</option>
+                  {UF_OPTIONS.map(uf => (
+                    <option key={uf} value={uf}>{uf}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Data de Nascimento */}
+            <div>
+              <label htmlFor="data_nascimento" className="block text-sm font-medium text-gray-700 mb-1">
+                Data de Nascimento
+              </label>
+              <input
+                type="date"
+                id="data_nascimento"
+                name="data_nascimento"
+                value={formData.data_nascimento}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Nicho */}
+            <div>
+              <label htmlFor="nicho" className="block text-sm font-medium text-gray-700 mb-1">
+                Nicho / Área de Atuação
+              </label>
+              <input
+                type="text"
+                id="nicho"
+                name="nicho"
+                value={formData.nicho}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Ex: Marketing Digital, E-commerce..."
+              />
+            </div>
+
+            {/* Interesse */}
+            <div>
+              <label htmlFor="interesse" className="block text-sm font-medium text-gray-700 mb-1">
+                Principais Interesses
+              </label>
+              <textarea
+                id="interesse"
+                name="interesse"
+                value={formData.interesse}
+                onChange={handleChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                placeholder="Conte sobre os principais interesses..."
+              />
+            </div>
+
+            {/* Grupo Favorito */}
+            <div>
+              <label htmlFor="grupo_favorito" className="block text-sm font-medium text-gray-700 mb-1">
+                Grupo Favorito
+              </label>
+              <input
+                type="text"
+                id="grupo_favorito"
+                name="grupo_favorito"
+                value={formData.grupo_favorito}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Nome do grupo favorito no Telegram"
               />
             </div>
 

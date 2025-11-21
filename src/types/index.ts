@@ -176,3 +176,62 @@ export interface PaginatedResponse<T> {
   limit: number;
   hasMore: boolean;
 }
+
+// Tipos para Pagamentos
+export type PaymentStatus = 'pendente' | 'aprovado' | 'rejeitado' | 'cancelado';
+
+export interface Payment {
+  id: string;
+  member_id: string;
+  plan_id?: string;
+  payment_method_id?: string;
+  valor: number;
+  status: PaymentStatus;
+  comprovante_url?: string;
+  comprovante_hash?: string;
+  descricao?: string;
+  observacoes?: string;
+  pix_chave?: string;
+  pix_txid?: string;
+  pix_e2eid?: string;
+  data_pagamento?: string;
+  data_vencimento?: string;
+  data_aprovacao?: string;
+  data_expiracao?: string;
+  dias_acesso: number;
+  aprovado_por?: string;
+  rejeitado_por?: string;
+  motivo_rejeicao?: string;
+  metadata?: any;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  member?: Member;
+  plan?: Plan;
+}
+
+export interface CreatePaymentInput {
+  member_id: string;
+  plan_id?: string;
+  payment_method_id?: string;
+  valor: number;
+  descricao?: string;
+  observacoes?: string;
+  comprovante_url?: string;
+  pix_chave?: string;
+  data_pagamento?: string;
+  data_vencimento?: string;
+  dias_acesso?: number;
+}
+
+export interface UpdatePaymentInput {
+  status?: PaymentStatus;
+  comprovante_url?: string;
+  descricao?: string;
+  observacoes?: string;
+  data_pagamento?: string;
+  data_aprovacao?: string;
+  aprovado_por?: string;
+  rejeitado_por?: string;
+  motivo_rejeicao?: string;
+}

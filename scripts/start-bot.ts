@@ -29,7 +29,8 @@ async function startBot() {
     console.log('📋 Funcionalidades ativas:');
     console.log('   • Auto-cadastro ao entrar no grupo');
     console.log('   • Auto-cadastro ao enviar mensagem');
-    console.log('   • Comando /registrar');
+    console.log('   • Comando /cadastro (formulário completo + link de convite)');
+    console.log('   • Comando /registrar (cadastro rápido)');
     console.log('   • Comando /entrar TOKEN (usar código de acesso)');
     console.log('   • Comando /status\n');
 

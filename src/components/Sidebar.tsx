@@ -6,6 +6,7 @@ import {
   Home,
   Users,
   UserPlus,
+  UserMinus,
   RefreshCw,
   Settings,
   BarChart3,
@@ -20,7 +21,10 @@ import {
   Tag,
   CheckCircle,
   FileText,
-  Layers
+  Layers,
+  FormInput,
+  Wallet,
+  Plus
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -44,6 +48,12 @@ export default function Sidebar() {
       icon: UserPlus,
       href: '/dashboard/new',
       description: 'Cadastrar manualmente',
+    },
+    {
+      title: 'Cadastro Público',
+      icon: FormInput,
+      href: '/cadastro',
+      description: 'Formulário de cadastro',
     },
     {
       title: 'Grupos Telegram',
@@ -82,6 +92,12 @@ export default function Sidebar() {
       description: 'Aprovar comprovantes PIX',
     },
     {
+      title: 'Gerenciar Pagamentos',
+      icon: Wallet,
+      href: '/dashboard/pagamentos-gerenciar',
+      description: 'CRUD completo de pagamentos',
+    },
+    {
       title: 'Histórico de Cadastros',
       icon: FileText,
       href: '/dashboard/cadastros',
@@ -90,8 +106,8 @@ export default function Sidebar() {
     {
       title: 'Estatísticas de Pagamento',
       icon: DollarSign,
-      href: '/dashboard/pagamentos',
-      description: 'Gerenciar e relatórios',
+      href: '/dashboard/pagamentos-estatisticas',
+      description: 'Relatórios financeiros',
     },
     {
       title: 'Sincronização',
@@ -104,6 +120,12 @@ export default function Sidebar() {
       icon: Bot,
       href: '/dashboard/bot',
       description: 'Sistema de auto-cadastro',
+    },
+    {
+      title: 'Exclusão Manual',
+      icon: UserMinus,
+      href: '/dashboard/exclusao',
+      description: 'Remover membros específicos',
     },
     {
       title: 'Auto-Exclusão',

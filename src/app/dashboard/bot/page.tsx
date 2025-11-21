@@ -51,23 +51,31 @@ export default function BotPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 ml-64">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-8 py-4">
-          <div className="flex items-center gap-3">
-            <Bot className="w-8 h-8 text-blue-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Bot de Auto-Registro</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Sistema automático de cadastro de membros
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Bot className="w-8 h-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Bot de Auto-Registro</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Sistema automático de cadastro de membros
+                </p>
+              </div>
             </div>
+            <a
+              href="/dashboard"
+              className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              ← Voltar ao Dashboard
+            </a>
           </div>
         </div>
       </header>
 
-      <main className="px-8 py-8 max-w-6xl">
+      <main className="px-8 py-8 max-w-6xl mx-auto">
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-green-50 border border-green-200 rounded-lg p-6">
@@ -101,6 +109,27 @@ export default function BotPage() {
           </div>
         </div>
 
+        {/* Aviso Importante */}
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6 rounded-r-lg">
+          <div className="flex items-start">
+            <AlertCircle className="w-6 h-6 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                ℹ️ Funcionamento Multi-Grupo
+              </h3>
+              <p className="text-blue-800 mb-2">
+                <strong>Importante:</strong> O bot funciona simultaneamente em <strong>TODOS os grupos</strong> do Telegram onde ele foi adicionado como administrador.
+              </p>
+              <ul className="text-sm text-blue-700 space-y-1 ml-4 list-disc">
+                <li>Cada grupo tem seu próprio controle de membros</li>
+                <li>O cadastro é único no sistema (se a pessoa está em 2 grupos, é o mesmo cadastro)</li>
+                <li>A data de vencimento é compartilhada entre todos os grupos</li>
+                <li>Quando vence, é removido de TODOS os grupos automaticamente</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* Como Funciona */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -114,11 +143,11 @@ export default function BotPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">
-                  Quando alguém ENTRA no grupo
+                  Quando alguém ENTRA em qualquer grupo
                 </h3>
                 <p className="text-sm text-gray-600">
                   O bot detecta automaticamente e cadastra a pessoa com 30 dias de acesso.
-                  Uma mensagem de boas-vindas é enviada.
+                  Uma mensagem de boas-vindas é enviada no grupo onde entrou.
                 </p>
               </div>
             </div>
@@ -129,11 +158,11 @@ export default function BotPage() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">
-                  Quando alguém ENVIA MENSAGEM
+                  Quando alguém ENVIA MENSAGEM em qualquer grupo
                 </h3>
                 <p className="text-sm text-gray-600">
                   Membros que já estavam no grupo são cadastrados automaticamente ao enviar
-                  qualquer mensagem (silenciosamente, sem notificar).
+                  qualquer mensagem (silenciosamente, sem notificar). Funciona em todos os grupos.
                 </p>
               </div>
             </div>
@@ -147,8 +176,8 @@ export default function BotPage() {
                   Registro Voluntário com /registrar
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Membros podem usar o comando <code className="bg-gray-100 px-1 py-0.5 rounded">/registrar</code> no
-                  grupo ou privado para se cadastrar manualmente.
+                  Membros podem usar o comando <code className="bg-gray-100 px-1 py-0.5 rounded">/registrar</code> em
+                  qualquer grupo ou por mensagem privada com o bot para se cadastrar manualmente.
                 </p>
               </div>
             </div>

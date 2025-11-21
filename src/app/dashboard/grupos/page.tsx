@@ -137,7 +137,7 @@ export default function GruposPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ml-64">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-8 py-4">
@@ -264,40 +264,18 @@ export default function GruposPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Horário de Auto-Remoção
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Hora</label>
-                    <select
-                      value={formData.removal_schedule_hour}
-                      onChange={(e) => setFormData({ ...formData, removal_schedule_hour: parseInt(e.target.value) })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {Array.from({ length: 24 }, (_, i) => i).map((h) => (
-                        <option key={h} value={h}>
-                          {String(h).padStart(2, '0')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Minuto</label>
-                    <select
-                      value={formData.removal_schedule_minute}
-                      onChange={(e) => setFormData({ ...formData, removal_schedule_minute: parseInt(e.target.value) })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {[0, 15, 30, 45].map((m) => (
-                        <option key={m} value={m}>
-                          {String(m).padStart(2, '0')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              {/* Aviso sobre Horário Global */}
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <p className="text-sm text-blue-800">
+                  ℹ️ <strong>Horário de Auto-Remoção:</strong> É configurado globalmente para TODOS os grupos na página{' '}
+                  <a href="/dashboard/auto-removal" className="underline font-semibold hover:text-blue-900">
+                    Auto-Exclusão
+                  </a>.
+                  <br />
+                  <span className="text-xs text-blue-700 mt-1 block">
+                    O sistema removerá membros vencidos de todos os grupos ativos no mesmo horário, um após o outro.
+                  </span>
+                </p>
               </div>
 
               <div className="flex gap-4">
@@ -377,8 +355,8 @@ export default function GruposPage() {
                         <p>
                           <strong>Auto-Remoção:</strong> {group.auto_removal_enabled ? '✅ Habilitada' : '❌ Desabilitada'}
                           {group.auto_removal_enabled && (
-                            <span className="ml-2">
-                              às {String(group.removal_schedule_hour).padStart(2, '0')}:{String(group.removal_schedule_minute).padStart(2, '0')}
+                            <span className="ml-2 text-blue-600">
+                              (Horário configurado na página Auto-Exclusão)
                             </span>
                           )}
                         </p>
@@ -411,7 +389,61 @@ export default function GruposPage() {
           )}
         </div>
 
-        {/* Instruções */}
+        {/* Instruções - Permissões do Bot */}
+        <div className="mt-6 bg-red-50 border border-red-300 rounded-lg p-6">
+          <h3 className="font-bold text-red-900 mb-3 flex items-center gap-2">
+            ⚠️ IMPORTANTE: Permissões do Bot no Grupo
+          </h3>
+          <div className="text-sm text-red-800 space-y-3">
+            <p className="font-semibold">
+              O bot <strong>PRECISA ser ADMINISTRADOR</strong> do grupo para funcionar!
+            </p>
+            <p className="font-medium">Permissões obrigatórias que o bot deve ter:</p>
+            <ul className="space-y-2 ml-4">
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">✅</span>
+                <div>
+                  <strong>Adicionar usuários / Convidar usuários</strong>
+                  <p className="text-xs text-red-700">Necessário para gerar links de convite</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">✅</span>
+                <div>
+                  <strong>Banir usuários / Excluir membros</strong>
+                  <p className="text-xs text-red-700">Necessário para remover membros vencidos</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 font-bold">✅</span>
+                <div>
+                  <strong>Gerenciar convites / Invite links</strong>
+                  <p className="text-xs text-red-700">Necessário para criar e revogar links de convite</p>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-600 font-bold">📌</span>
+                <div>
+                  <strong>Deletar mensagens</strong>
+                  <p className="text-xs text-red-700">Opcional - útil para moderação</p>
+                </div>
+              </li>
+            </ul>
+            <div className="mt-4 p-3 bg-red-100 rounded border border-red-300">
+              <p className="font-semibold text-red-900">Como tornar o bot administrador:</p>
+              <ol className="text-xs mt-2 space-y-1 list-decimal list-inside">
+                <li>Vá nas configurações do grupo (⚙️)</li>
+                <li>Toque em "Administradores"</li>
+                <li>Toque em "Adicionar administrador"</li>
+                <li>Selecione o bot <strong>@INEMATLGrupobot</strong></li>
+                <li>Marque as permissões listadas acima</li>
+                <li>Salve as alterações</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        {/* Instruções - Como Obter ID */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="font-bold text-blue-900 mb-3">
             💡 Como obter o ID do grupo Telegram
@@ -421,7 +453,58 @@ export default function GruposPage() {
             <li>O bot enviará uma mensagem com o ID do grupo (ex: -1002414487357)</li>
             <li>Copie o ID completo (incluindo o sinal de menos)</li>
             <li>Cole o ID no campo "ID do Grupo Telegram" acima</li>
-            <li>Remova o bot do grupo após obter o ID</li>
+            <li>Remova o @getidsbot do grupo após obter o ID</li>
+          </ol>
+        </div>
+
+        {/* Instruções - Passo a Passo Completo */}
+        <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-6">
+          <h3 className="font-bold text-green-900 mb-3">
+            📋 Passo a Passo: Adicionar Bot em Novo Grupo
+          </h3>
+          <ol className="text-sm text-green-800 space-y-3 list-decimal list-inside">
+            <li>
+              <strong>Adicione o bot no grupo:</strong>
+              <ul className="ml-6 mt-1 space-y-1 text-xs list-disc">
+                <li>Abra o grupo Telegram</li>
+                <li>Toque em "Adicionar membro"</li>
+                <li>Busque por <code className="bg-green-100 px-1 rounded">@INEMATLGrupobot</code></li>
+                <li>Adicione o bot ao grupo</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Promova o bot a Administrador:</strong>
+              <ul className="ml-6 mt-1 space-y-1 text-xs list-disc">
+                <li>Configurações do grupo → Administradores → Adicionar</li>
+                <li>Selecione o bot e marque as permissões necessárias (veja caixa vermelha acima)</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Obtenha o ID do grupo:</strong>
+              <ul className="ml-6 mt-1 space-y-1 text-xs list-disc">
+                <li>Adicione o <code className="bg-green-100 px-1 rounded">@getidsbot</code> no grupo</li>
+                <li>Copie o ID que ele enviar (ex: -1002414487357)</li>
+                <li>Remova o @getidsbot do grupo</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Cadastre o grupo nesta página:</strong>
+              <ul className="ml-6 mt-1 space-y-1 text-xs list-disc">
+                <li>Clique em "Adicionar Grupo" acima</li>
+                <li>Preencha o nome e cole o ID do grupo</li>
+                <li>Marque "Grupo Ativo"</li>
+                <li>Configure a auto-remoção se desejar</li>
+                <li>Salve</li>
+              </ul>
+            </li>
+            <li>
+              <strong>Teste o bot:</strong>
+              <ul className="ml-6 mt-1 space-y-1 text-xs list-disc">
+                <li>Volte ao grupo Telegram</li>
+                <li>Digite <code className="bg-green-100 px-1 rounded">/status</code></li>
+                <li>O bot deve responder!</li>
+              </ul>
+            </li>
           </ol>
         </div>
       </main>

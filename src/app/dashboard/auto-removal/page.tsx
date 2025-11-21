@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Trash2, Play, Clock, AlertTriangle, CheckCircle, UserX } from 'lucide-react';
+import { Trash2, Play, Clock, AlertTriangle, CheckCircle, UserX, Layers } from 'lucide-react';
 
 export default function AutoRemovalPage() {
   const [loading, setLoading] = useState(false);
@@ -135,49 +135,70 @@ export default function AutoRemovalPage() {
     }
   }
 
-  async function saveScheduleForGroup(groupId: string, groupName: string, hour: string, minute: string) {
-    try {
-      const res = await fetch('/api/telegram-groups', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: groupId,
-          removal_schedule_hour: parseInt(hour),
-          removal_schedule_minute: parseInt(minute),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        alert(`✅ Horário salvo para o grupo "${groupName}": ${hour}:${minute}\n\nNota: Para aplicar o agendamento, configure o cron job no sistema.`);
-        await fetchGroups(); // Recarregar grupos
-      } else {
-        alert(`❌ Erro ao salvar: ${data.error}`);
-      }
-    } catch (error: any) {
-      alert(`❌ Erro: ${error.message}`);
-    }
-  }
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 ml-64">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-8 py-4">
-          <div className="flex items-center gap-3">
-            <Trash2 className="w-8 h-8 text-red-600" />
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Auto-Exclusão por Vencimento</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Gerenciar remoção automática de membros vencidos
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Trash2 className="w-8 h-8 text-red-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Auto-Exclusão por Vencimento</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  Gerenciar remoção automática de membros vencidos
+                </p>
+              </div>
             </div>
+            <a
+              href="/dashboard"
+              className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              ← Voltar ao Dashboard
+            </a>
           </div>
         </div>
       </header>
 
-      <main className="px-8 py-8 max-w-7xl">
+      <main className="px-8 py-8 max-w-7xl mx-auto">
+        {/* Configuração de Horário Global */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Clock className="w-6 h-6 text-blue-600" />
+            Horário de Auto-Remoção (Todos os Grupos)
+          </h2>
+          <p className="text-sm text-gray-600 mb-6">
+            Configure o horário diário em que o sistema removerá automaticamente os membros vencidos de todos os grupos.
+          </p>
+
+          <div className="flex items-end gap-4">
+            <div className="flex-1 max-w-xs">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Horário diário
+              </label>
+              <input
+                type="time"
+                value={`${schedule.hour}:${schedule.minute}`}
+                onChange={(e) => {
+                  const [hour, minute] = e.target.value.split(':');
+                  setSchedule({ hour, minute });
+                }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <button
+              onClick={() => alert('⚙️ Para aplicar o horário:\n\nConfigure o cron job no sistema ou use o Vercel Cron (já configurado no vercel.json).\n\nO sistema executará automaticamente neste horário todos os dias.')}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Salvar Horário
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-500 mt-3">
+            💡 O sistema removerá automaticamente membros vencidos de <strong>todos os grupos</strong> neste horário, um após o outro.
+          </p>
+        </div>
+
         {/* Lista de Grupos */}
         {loadingGroups ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -192,110 +213,44 @@ export default function AutoRemovalPage() {
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">Grupos Telegram Configurados</h2>
+              <h2 className="text-xl font-bold text-gray-900">Grupos Ativos</h2>
               <p className="text-sm text-gray-500 mt-1">
-                Configure o horário de auto-remoção para cada grupo individualmente
+                A auto-remoção será executada em todos estes grupos no horário configurado acima
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-              {groups.map((group) => {
-                const [localHour, setLocalHour] = useState(String(group.removal_schedule_hour || 0).padStart(2, '0'));
-                const [localMinute, setLocalMinute] = useState(String(group.removal_schedule_minute || 0).padStart(2, '0'));
-
-                return (
-                  <div key={group.id} className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-                    <div className="mb-4">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {group.nome}
-                        </h3>
-                        {group.ativo ? (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
-                            Ativo
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded">
-                            Inativo
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="space-y-1 text-sm text-gray-600">
-                        <p>
-                          <strong>ID Telegram:</strong>{' '}
-                          <code className="bg-white px-2 py-1 rounded border border-gray-300 text-xs">
-                            {group.telegram_group_id}
-                          </code>
-                        </p>
-                        {group.descricao && (
-                          <p>
-                            <strong>Descrição:</strong> {group.descricao}
-                          </p>
-                        )}
-                        <p>
-                          <strong>Auto-Remoção:</strong>{' '}
-                          {group.auto_removal_enabled ? (
-                            <span className="text-green-700 font-medium">✅ Habilitada</span>
-                          ) : (
-                            <span className="text-red-700 font-medium">❌ Desabilitada</span>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Configuração de Horário */}
-                    <div className="mt-4 pt-4 border-t border-gray-300">
-                      <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-blue-600" />
-                        Horário de Auto-Remoção
-                      </h4>
-
-                      <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Hora</label>
-                          <select
-                            value={localHour}
-                            onChange={(e) => setLocalHour(e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map((h) => (
-                              <option key={h} value={h}>{h}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Minuto</label>
-                          <select
-                            value={localMinute}
-                            onChange={(e) => setLocalMinute(e.target.value)}
-                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          >
-                            {['00', '15', '30', '45'].map((m) => (
-                              <option key={m} value={m}>{m}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">&nbsp;</label>
-                          <button
-                            onClick={() => saveScheduleForGroup(group.id, group.nome, localHour, localMinute)}
-                            className="w-full px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-                          >
-                            Salvar
-                          </button>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-gray-500 mt-2">
-                        Horário atual: <strong>{String(group.removal_schedule_hour).padStart(2, '0')}:{String(group.removal_schedule_minute).padStart(2, '0')}</strong>
-                      </p>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
+              {groups.map((group) => (
+                <div key={group.id} className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Layers className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-base font-semibold text-gray-900">
+                      {group.nome}
+                    </h3>
+                    {group.ativo ? (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
+                        Ativo
+                      </span>
+                    ) : (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded">
+                        Inativo
+                      </span>
+                    )}
                   </div>
-                );
-              })}
+
+                  <div className="space-y-1 text-sm text-gray-600">
+                    <p>
+                      <strong>ID:</strong>{' '}
+                      <code className="bg-white px-2 py-1 rounded border border-gray-300 text-xs">
+                        {group.telegram_group_id}
+                      </code>
+                    </p>
+                    {group.descricao && (
+                      <p className="text-xs text-gray-500">{group.descricao}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -104,7 +104,7 @@ export default function InclusaoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 ml-64">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-8 py-4">
@@ -116,7 +116,7 @@ export default function InclusaoPage() {
               </p>
             </div>
             <a
-              href="/"
+              href="/dashboard"
               className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               ← Voltar ao Dashboard
@@ -126,6 +126,31 @@ export default function InclusaoPage() {
       </header>
 
       <main className="px-8 py-8 max-w-7xl mx-auto">
+        {/* Aviso - API não disponível */}
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-6 mb-8 rounded-r-lg">
+          <div className="flex items-start">
+            <AlertCircle className="w-6 h-6 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                ⚠️ Funcionalidade Temporariamente Indisponível
+              </h3>
+              <p className="text-yellow-800 mb-3">
+                Esta funcionalidade requer a tabela <code className="bg-yellow-100 px-2 py-1 rounded text-sm">configs</code> no banco de dados, que ainda não foi criada.
+              </p>
+              <div className="bg-yellow-100 border border-yellow-300 rounded p-4 mt-3">
+                <p className="text-sm text-yellow-900 font-semibold mb-2">Para habilitar esta funcionalidade:</p>
+                <ol className="text-sm text-yellow-800 space-y-1 ml-4">
+                  <li>1. Crie a tabela <code className="bg-yellow-200 px-1 rounded">configs</code> no Supabase</li>
+                  <li>2. Adicione os campos necessários para configuração de horários</li>
+                  <li>3. Recarregue esta página</li>
+                </ol>
+              </div>
+              <p className="text-xs text-yellow-700 mt-3">
+                <strong>Nota:</strong> Por enquanto, use a página <a href="/dashboard/grupos" className="underline hover:text-yellow-900">Grupos Telegram</a> para gerenciar membros manualmente.
+              </p>
+            </div>
+          </div>
+        </div>
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
