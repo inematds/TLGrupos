@@ -280,13 +280,58 @@ export async function removeMember(id: string) {
  * Obtém estatísticas gerais
  */
 export async function getStats() {
-  const { data, error } = await supabase.from('stats').select('*').single();
+  // Tentar usar a view stats primeiro
+  const { data: statsViewData, error: statsViewError } = await supabase
+    .from('stats')
+    .select('*')
+    .single();
 
-  if (error) {
-    throw new Error(`Erro ao buscar estatísticas: ${error.message}`);
+  // Se a view funcionar e tiver dados válidos, usar ela
+  if (!statsViewError && statsViewData && statsViewData.total_cadastros > 0) {
+    return statsViewData as Stats;
   }
 
-  return data as Stats;
+  // Fallback: calcular estatísticas manualmente se a view não funcionar
+  console.log('View stats não disponível ou vazia, calculando manualmente...');
+
+  // Buscar todos os membros
+  const { data: allMembers, error: membersError } = await supabase
+    .from('members')
+    .select('id, status, telegram_user_id, data_vencimento');
+
+  if (membersError) {
+    throw new Error(`Erro ao buscar membros: ${membersError.message}`);
+  }
+
+  const members = allMembers || [];
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  // Calcular estatísticas
+  const stats = {
+    total_cadastros: members.length,
+    total_ativos: members.filter(m => m.status === 'ativo').length,
+    total_vencidos: members.filter(m => m.status === 'vencido').length,
+    total_removidos: members.filter(m => m.status === 'removido').length,
+    erro_remocao: members.filter(m => m.status === 'erro_remocao').length,
+    total_pausados: members.filter(m => m.status === 'pausado').length,
+    ativos_no_grupo: members.filter(m => m.status === 'ativo' && m.telegram_user_id !== null).length,
+    ativos_sem_grupo: members.filter(m => m.status === 'ativo' && m.telegram_user_id === null).length,
+    ativos_sem_telegram: members.filter(m => m.status === 'ativo' && m.telegram_user_id === null).length,
+    sem_telegram_user_id: members.filter(m => m.status === 'ativo' && m.telegram_user_id === null).length,
+    vencendo_7dias: members.filter(m => {
+      if (m.status !== 'ativo') return false;
+      const vencimento = new Date(m.data_vencimento);
+      return vencimento >= now && vencimento <= sevenDaysFromNow;
+    }).length,
+    ativos_mas_vencidos: members.filter(m => {
+      if (m.status !== 'ativo') return false;
+      const vencimento = new Date(m.data_vencimento);
+      return vencimento < now;
+    }).length,
+  };
+
+  return stats as Stats;
 }
 
 /**
