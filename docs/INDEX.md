@@ -15,6 +15,7 @@ Este diretório contém toda a documentação técnica e guias do sistema TLGrup
 - [AUTO_REGISTRO_TELEGRAM_COMPLETO.md](./AUTO_REGISTRO_TELEGRAM_COMPLETO.md) - Sistema de auto-registro
 - [COMANDO_CADASTRO_TELEGRAM.md](./COMANDO_CADASTRO_TELEGRAM.md) - Comandos de cadastro
 - [VINCULACAO_TELEGRAM_ID.md](./VINCULACAO_TELEGRAM_ID.md) - Vinculação de IDs do Telegram
+- [REATIVACAO_AUTOMATICA.md](./REATIVACAO_AUTOMATICA.md) - Reativação automática de membros removidos
 
 ### 💰 **Sistema de Pagamentos**
 - [COMO_FUNCIONAM_OS_PAGAMENTOS.md](./COMO_FUNCIONAM_OS_PAGAMENTOS.md) - Visão geral do sistema

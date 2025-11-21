@@ -145,19 +145,57 @@ bot.on('new_chat_members', async (ctx) => {
     }
 
     if (existing) {
-      // Atualizar dados do Telegram (sempre atualizar para pegar mudanças de nome/username)
+      // Verificar se o membro estava removido e precisa ser reativado
+      const foiRemovido = existing.status === 'removido';
+
+      // Preparar dados de atualização
+      const updateData: any = {
+        no_grupo: true,
+        telegram_user_id: member.id, // Vincular/atualizar ID
+        telegram_username: member.username || null,
+        telegram_first_name: member.first_name,
+        telegram_last_name: member.last_name || null,
+      };
+
+      // Se estava removido, reativar automaticamente
+      if (foiRemovido) {
+        console.log(`[Webhook] Membro ${member.first_name} estava removido. Reativando automaticamente...`);
+
+        // Calcular nova data de vencimento (+ 30 dias)
+        const hoje = new Date();
+        const novaDataVencimento = new Date(hoje);
+        novaDataVencimento.setDate(novaDataVencimento.getDate() + DEFAULT_EXPIRY_DAYS);
+
+        updateData.status = 'ativo';
+        updateData.data_vencimento = novaDataVencimento.toISOString();
+        updateData.notificado_7dias = false;
+        updateData.notificado_3dias = false;
+        updateData.notificado_1dia = false;
+      }
+
+      // Atualizar dados do Telegram e reativar se necessário
       await supabase
         .from('members')
-        .update({
-          no_grupo: true,
-          telegram_user_id: member.id, // Vincular/atualizar ID
-          telegram_username: member.username || null,
-          telegram_first_name: member.first_name,
-          telegram_last_name: member.last_name || null,
-        })
+        .update(updateData)
         .eq('id', existing.id);
 
-      console.log(`[Webhook] Membro ${member.first_name} atualizado: no_grupo=true, telegram_user_id=${member.id}`);
+      if (foiRemovido) {
+        console.log(`[Webhook] Membro reativado com sucesso! Nova data de vencimento: ${updateData.data_vencimento}`);
+
+        // Enviar mensagem de boas-vindas para membro reativado
+        try {
+          await ctx.reply(
+            `🎉 Bem-vindo(a) de volta, ${member.first_name}!\n\n` +
+            `Seu acesso foi reativado automaticamente.\n` +
+            `Você tem mais ${DEFAULT_EXPIRY_DAYS} dias de acesso.\n\n` +
+            `Use /status para verificar seu cadastro.`
+          );
+        } catch (err) {
+          console.error('[Webhook] Erro ao enviar mensagem de reativação:', err);
+        }
+      } else {
+        console.log(`[Webhook] Membro ${member.first_name} atualizado: no_grupo=true, telegram_user_id=${member.id}`);
+      }
 
       // Marcar link como usado (já expira automaticamente pelo Telegram)
       if (existing.invite_link && inviteLinkUsed === existing.invite_link) {
@@ -172,10 +210,12 @@ bot.on('new_chat_members', async (ctx) => {
       // Registrar log de entrada
       await supabase.from('logs').insert({
         member_id: existing.id,
-        acao: 'entrada_grupo',
+        acao: foiRemovido ? 'reativacao_automatica' : 'entrada_grupo',
         detalhes: {
           first_name: member.first_name,
           username: member.username,
+          foi_removido: foiRemovido,
+          nova_data_vencimento: foiRemovido ? updateData.data_vencimento : null,
         },
         telegram_user_id: member.id,
         telegram_username: member.username,
