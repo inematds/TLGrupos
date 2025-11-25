@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
       // Se não encontrou processos, apenas iniciar
       console.log('[Bot Restart] Nenhum processo encontrado, iniciando bot...');
-      exec('npm run start:bot', { detached: true, stdio: 'ignore' });
+      exec('npm run start:bot');
 
       return NextResponse.json({
         success: true,
