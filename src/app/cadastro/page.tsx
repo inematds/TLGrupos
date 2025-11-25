@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { UserPlus, Mail, Phone, MapPin, Calendar, Target, Heart, Users, Info } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -10,7 +10,7 @@ const UF_OPTIONS = [
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-export default function CadastroPage() {
+function CadastroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -433,5 +433,14 @@ export default function CadastroPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function CadastroPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Carregando...</div>}>
+      <CadastroContent />
+    </Suspense>
   );
 }
