@@ -95,6 +95,8 @@ export interface CreateMemberInput {
   uf?: string;
   data_nascimento?: string;
   nicho?: string;
+  interesse?: string;
+  grupo_favorito?: string;
   data_vencimento?: string; // Opcional agora - pode ser calculado do plano
   plan_id?: string; // Plano selecionado
   observacoes?: string;
