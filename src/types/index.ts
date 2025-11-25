@@ -22,6 +22,13 @@ export interface Member {
   nome: string;
   email?: string;
   telefone?: string;
+  cpf?: string;
+  cidade?: string;
+  uf?: string;
+  data_nascimento?: string;
+  nicho?: string;
+  interesse?: string;
+  grupo_favorito?: string;
   data_entrada: string;
   data_vencimento: string;
   notificado_7dias: boolean;

@@ -115,13 +115,15 @@ export default function RegisterPixEmailPage() {
         transactionAmount: valor,
       });
 
-      console.log('✅ Payload PIX gerado pela lib:', pixPayload.toBRCode());
-      console.log('📱 Testando no app do banco - deve aparecer:');
-      console.log('   Chave:', pixKey);
-      console.log('   Valor: R$', valor.toFixed(2));
+      if ('toBRCode' in pixPayload) {
+        console.log('✅ Payload PIX gerado pela lib:', pixPayload.toBRCode());
+        console.log('📱 Testando no app do banco - deve aparecer:');
+        console.log('   Chave:', pixKey);
+        console.log('   Valor: R$', valor.toFixed(2));
 
-      const url = await QRCode.toDataURL(pixPayload.toBRCode());
-      setQrCodeUrl(url);
+        const url = await QRCode.toDataURL(pixPayload.toBRCode());
+        setQrCodeUrl(url);
+      }
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);
     }

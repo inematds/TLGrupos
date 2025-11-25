@@ -574,7 +574,7 @@ export default function MembersPage() {
                       type="text"
                       value={editingMember.telegram_user_id || ''}
                       onChange={(e) =>
-                        setEditingMember({ ...editingMember, telegram_user_id: parseInt(e.target.value) || null })
+                        setEditingMember({ ...editingMember, telegram_user_id: parseInt(e.target.value) || 0 })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                       disabled

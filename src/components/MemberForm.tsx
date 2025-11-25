@@ -40,7 +40,7 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ message: string; inviteLink?: string } | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setError(null);

@@ -106,10 +106,11 @@ export default function RegisterPixUploadPage() {
         transactionAmount: valor,
       });
 
-      console.log('✅ Payload PIX gerado:', pixPayload.toBRCode());
-
-      const url = await QRCode.toDataURL(pixPayload.toBRCode());
-      setQrCodeUrl(url);
+      if ('toBRCode' in pixPayload) {
+        console.log('✅ Payload PIX gerado:', pixPayload.toBRCode());
+        const url = await QRCode.toDataURL(pixPayload.toBRCode());
+        setQrCodeUrl(url);
+      }
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);
     }
