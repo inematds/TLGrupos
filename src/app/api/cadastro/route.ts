@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { getServiceSupabase } from '@/lib/supabase';
 import { createMember } from '@/services/member-service';
 import { z } from 'zod';
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       dias_acesso: diasAcesso,
     });
 
-    const supabase = createClient();
+    const supabase = getServiceSupabase();
 
     // Registrar log
     await supabase.from('logs').insert([

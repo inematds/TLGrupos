@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
         // Reiniciar bot
         console.log('[Bot Restart] Reiniciando bot...');
-        exec('npm run start:bot', { detached: true, stdio: 'ignore' });
+        exec('npm run start:bot');
 
         console.log('[Bot Restart] ✅ Bot reiniciado com sucesso');
 
