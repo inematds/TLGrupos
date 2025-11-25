@@ -91,6 +91,10 @@ export interface CreateMemberInput {
   nome: string;
   email?: string;
   telefone?: string;
+  cidade?: string;
+  uf?: string;
+  data_nascimento?: string;
+  nicho?: string;
   data_vencimento?: string; // Opcional agora - pode ser calculado do plano
   plan_id?: string; // Plano selecionado
   observacoes?: string;
