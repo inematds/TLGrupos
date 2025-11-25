@@ -102,7 +102,11 @@ export default function GruposPage() {
       if (data.success) {
         await fetchGroups();
         resetForm();
-        alert(editingId ? '✅ Grupo atualizado com sucesso!' : '✅ Grupo criado com sucesso!');
+        alert(
+          editingId
+            ? '✅ Grupo atualizado com sucesso!\n\n🔄 O bot está sendo reiniciado para aplicar as mudanças...'
+            : '✅ Grupo criado com sucesso!\n\n🔄 O bot está sendo reiniciado para aplicar as mudanças...'
+        );
       } else {
         alert(`❌ Erro: ${data.error}`);
       }
@@ -127,7 +131,7 @@ export default function GruposPage() {
 
       if (data.success) {
         await fetchGroups();
-        alert('✅ Grupo excluído com sucesso!');
+        alert('✅ Grupo excluído com sucesso!\n\n🔄 O bot está sendo reiniciado para aplicar as mudanças...');
       } else {
         alert(`❌ Erro: ${data.error}`);
       }

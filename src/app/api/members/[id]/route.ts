@@ -15,6 +15,7 @@ const updateMemberSchema = z.object({
   data_entrada: z.string().optional(),
   data_vencimento: z.string().optional(),
   status: z.enum(['ativo', 'removido', 'pausado', 'erro_remocao']).optional(),
+  group_id: z.string().uuid().nullable().optional(),
   observacoes: z.string().nullable().optional(),
 });
 

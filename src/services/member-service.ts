@@ -13,7 +13,9 @@ export async function getMembers(filters?: {
   limit?: number;
   offset?: number;
 }) {
-  let query = supabase.from('members').select('*', { count: 'exact' });
+  let query = supabase
+    .from('members')
+    .select('*, telegram_groups(nome)', { count: 'exact' });
 
   // Filtro especial: "requer_atencao" mostra tudo EXCETO ativos normais
   if (filters?.status === 'requer_atencao') {
@@ -58,8 +60,15 @@ export async function getMembers(filters?: {
     throw new Error(`Erro ao buscar membros: ${error.message}`);
   }
 
+  // Mapear os dados para incluir grupo_nome
+  const membersWithGroupName = data?.map((member: any) => ({
+    ...member,
+    grupo_nome: member.telegram_groups?.nome || null,
+    telegram_groups: undefined, // Remove o objeto aninhado
+  }));
+
   return {
-    data: data as Member[],
+    data: membersWithGroupName as Member[],
     total: count || 0,
   };
 }
@@ -297,7 +306,7 @@ export async function getStats() {
   // Buscar todos os membros
   const { data: allMembers, error: membersError } = await supabase
     .from('members')
-    .select('id, status, telegram_user_id, data_vencimento');
+    .select('id, status, telegram_user_id, data_vencimento, no_grupo');
 
   if (membersError) {
     throw new Error(`Erro ao buscar membros: ${membersError.message}`);
@@ -307,6 +316,8 @@ export async function getStats() {
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
+  console.log(`[getStats] Total de membros encontrados: ${members.length}`);
+
   // Calcular estatísticas
   const stats = {
     total_cadastros: members.length,
@@ -315,8 +326,8 @@ export async function getStats() {
     total_removidos: members.filter(m => m.status === 'removido').length,
     erro_remocao: members.filter(m => m.status === 'erro_remocao').length,
     total_pausados: members.filter(m => m.status === 'pausado').length,
-    ativos_no_grupo: members.filter(m => m.status === 'ativo' && m.telegram_user_id !== null).length,
-    ativos_sem_grupo: members.filter(m => m.status === 'ativo' && m.telegram_user_id === null).length,
+    ativos_no_grupo: members.filter(m => m.status === 'ativo' && m.no_grupo === true).length,
+    ativos_sem_grupo: members.filter(m => m.status === 'ativo' && m.no_grupo === false).length,
     ativos_sem_telegram: members.filter(m => m.status === 'ativo' && m.telegram_user_id === null).length,
     sem_telegram_user_id: members.filter(m => m.status === 'ativo' && m.telegram_user_id === null).length,
     vencendo_7dias: members.filter(m => {

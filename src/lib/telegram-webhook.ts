@@ -556,15 +556,43 @@ bot.command('entrar', async (ctx) => {
  */
 bot.command('status', async (ctx) => {
   const user = ctx.from;
+  const isGroup = ctx.chat.type !== 'private';
+
+  console.log(`[Comando] /status de ${user.first_name} (${user.id}) - Chat: ${ctx.chat.type}`);
 
   const member = await getMemberByTelegramId(user.id);
 
   if (!member) {
-    await ctx.reply(
-      `⚠️ Você não está cadastrado no sistema.\n\n` +
-      `Use /registrar para se cadastrar automaticamente.`,
-      { reply_to_message_id: ctx.message.message_id }
-    );
+    // Se for no grupo, deletar o comando e avisar no privado
+    if (isGroup) {
+      try {
+        await ctx.deleteMessage();
+      } catch (err) {
+        console.error('[/status] Erro ao deletar mensagem:', err);
+      }
+
+      try {
+        await ctx.telegram.sendMessage(
+          user.id,
+          `⚠️ Você não está cadastrado no sistema.\n\n` +
+          `Use /registrar para se cadastrar automaticamente.`
+        );
+      } catch (err) {
+        // Se falhar enviar no privado (usuário bloqueou bot), avisar no grupo
+        console.error('[/status] Erro ao enviar mensagem privada:', err);
+        await ctx.reply(
+          `⚠️ ${user.first_name}, não consegui te enviar mensagem privada!\n\n` +
+          `Inicie uma conversa comigo primeiro: @${(await ctx.telegram.getMe()).username}`,
+          { reply_to_message_id: ctx.message.message_id }
+        );
+      }
+    } else {
+      // Se já é privado, responder normalmente
+      await ctx.reply(
+        `⚠️ Você não está cadastrado no sistema.\n\n` +
+        `Use /registrar para se cadastrar automaticamente.`
+      );
+    }
     return;
   }
 
@@ -583,7 +611,7 @@ bot.command('status', async (ctx) => {
     statusMsg = 'Próximo ao vencimento';
   }
 
-  await ctx.reply(
+  const statusMessage =
     `${statusEmoji} Status do seu cadastro:\n\n` +
     `👤 Nome: ${member.nome}\n` +
     `🆔 ID: ${member.telegram_user_id}\n` +
@@ -592,9 +620,50 @@ bot.command('status', async (ctx) => {
     `⏰ Dias restantes: ${diasRestantes > 0 ? diasRestantes : 'VENCIDO'}\n` +
     `📊 Status: ${statusMsg}\n\n` +
     `${diasRestantes <= 7 && diasRestantes > 0 ? '⚠️ Seu acesso está próximo de vencer!\n' : ''}` +
-    `${diasRestantes < 0 ? '❌ Seu acesso está vencido. Solicite renovação.\n' : ''}`,
-    { reply_to_message_id: ctx.message.message_id }
-  );
+    `${diasRestantes < 0 ? '❌ Seu acesso está vencido. Solicite renovação.\n' : ''}`;
+
+  // Se foi usado no grupo, enviar no privado
+  if (isGroup) {
+    try {
+      // Deletar comando do grupo
+      await ctx.deleteMessage();
+    } catch (err) {
+      console.error('[/status] Erro ao deletar mensagem:', err);
+    }
+
+    try {
+      // Enviar status no privado
+      await ctx.telegram.sendMessage(user.id, statusMessage);
+
+      // Avisar no grupo que foi enviado no privado (mensagem auto-deletável)
+      const notification = await ctx.reply(
+        `📬 ${user.first_name}, enviei suas informações no privado para proteger sua privacidade!`,
+        { reply_to_message_id: ctx.message.message_id }
+      );
+
+      // Deletar notificação após 5 segundos
+      setTimeout(async () => {
+        try {
+          await ctx.telegram.deleteMessage(ctx.chat.id, notification.message_id);
+        } catch (err) {
+          console.error('[/status] Erro ao deletar notificação:', err);
+        }
+      }, 5000);
+
+    } catch (err) {
+      // Se falhar enviar no privado (usuário bloqueou bot)
+      console.error('[/status] Erro ao enviar mensagem privada:', err);
+      await ctx.reply(
+        `⚠️ ${user.first_name}, não consegui te enviar mensagem privada!\n\n` +
+        `Inicie uma conversa comigo primeiro: @${(await ctx.telegram.getMe()).username}\n` +
+        `Depois use /status novamente.`,
+        { reply_to_message_id: ctx.message.message_id }
+      );
+    }
+  } else {
+    // Se já é privado, responder normalmente
+    await ctx.reply(statusMessage);
+  }
 });
 
 /**

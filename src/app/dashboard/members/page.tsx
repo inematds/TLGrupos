@@ -11,10 +11,24 @@ export default function MembersPage() {
   const [search, setSearch] = useState<string>('');
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [groups, setGroups] = useState<any[]>([]);
 
   useEffect(() => {
     fetchMembers();
+    fetchGroups();
   }, [filter]);
+
+  async function fetchGroups() {
+    try {
+      const res = await fetch('/api/grupos');
+      const data = await res.json();
+      if (data.success) {
+        setGroups(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar grupos:', error);
+    }
+  }
 
   async function fetchMembers() {
     setLoading(true);
@@ -67,6 +81,7 @@ export default function MembersPage() {
           nicho: editingMember.nicho || null,
           interesse: editingMember.interesse || null,
           grupo_favorito: editingMember.grupo_favorito || null,
+          group_id: editingMember.group_id || null,
           telegram_username: editingMember.telegram_username || null,
           telegram_first_name: editingMember.telegram_first_name || null,
           telegram_last_name: editingMember.telegram_last_name || null,
@@ -257,6 +272,9 @@ export default function MembersPage() {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Grupo
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Username
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -279,7 +297,7 @@ export default function MembersPage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {members.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={8} className="px-6 py-8 text-center text-gray-500">
                     <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                     <p>Nenhum membro encontrado</p>
                   </td>
@@ -294,6 +312,11 @@ export default function MembersPage() {
                         {member.email && (
                           <div className="text-xs text-gray-500">{member.email}</div>
                         )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-500">
+                          {member.grupo_nome || 'Sem grupo'}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-500">
@@ -516,6 +539,32 @@ export default function MembersPage() {
                   <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
                     Informações do Telegram
                   </h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Grupo do Telegram
+                    </label>
+                    <select
+                      value={editingMember.group_id || ''}
+                      onChange={(e) =>
+                        setEditingMember({
+                          ...editingMember,
+                          group_id: e.target.value || null
+                        })
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Sem grupo</option>
+                      {groups.map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.nome}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Selecione o grupo do Telegram ao qual o membro pertence
+                    </p>
+                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

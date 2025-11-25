@@ -30,6 +30,7 @@ export interface Member {
   status: MemberStatus;
   observacoes?: string;
   plan_id?: string;
+  group_id?: string | null;
   invite_link?: string;
   invite_link_revoked?: boolean;
   invite_link_type?: 'unique' | 'generic';
@@ -37,6 +38,8 @@ export interface Member {
   updated_at: string;
   // Joined data from plan
   plan?: Plan;
+  // Joined data from telegram_groups
+  grupo_nome?: string;
 }
 
 export interface Log {
@@ -100,6 +103,7 @@ export interface UpdateMemberInput {
   data_vencimento?: string;
   status?: MemberStatus;
   plan_id?: string;
+  group_id?: string | null;
   observacoes?: string;
 }
 

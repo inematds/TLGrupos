@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { syncGroupsToEnv } from '@/lib/update-env';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -58,6 +59,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 1. Sincronizar grupos com .env.local
+    console.log('[Grupo Criado] Sincronizando .env.local...');
+    const syncResult = await syncGroupsToEnv();
+
+    if (!syncResult.success) {
+      console.error('[Grupo Criado] Falha ao sincronizar .env:', syncResult.error);
+    } else {
+      console.log('[Grupo Criado] ✅ .env.local atualizado com', syncResult.groupsCount, 'grupos');
+    }
+
+    // 2. Reiniciar bot para aplicar mudanças
+    try {
+      const restartResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/bot/restart`, {
+        method: 'POST',
+      });
+      const restartData = await restartResponse.json();
+      console.log('[Grupo Criado] Bot restart:', restartData);
+    } catch (restartError) {
+      console.warn('[Grupo Criado] Não foi possível reiniciar bot automaticamente:', restartError);
+    }
+
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error('Erro ao criar grupo:', error);
@@ -96,6 +118,27 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // 1. Sincronizar grupos com .env.local
+    console.log('[Grupo Atualizado] Sincronizando .env.local...');
+    const syncResult = await syncGroupsToEnv();
+
+    if (!syncResult.success) {
+      console.error('[Grupo Atualizado] Falha ao sincronizar .env:', syncResult.error);
+    } else {
+      console.log('[Grupo Atualizado] ✅ .env.local atualizado com', syncResult.groupsCount, 'grupos');
+    }
+
+    // 2. Reiniciar bot para aplicar mudanças
+    try {
+      const restartResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/bot/restart`, {
+        method: 'POST',
+      });
+      const restartData = await restartResponse.json();
+      console.log('[Grupo Atualizado] Bot restart:', restartData);
+    } catch (restartError) {
+      console.warn('[Grupo Atualizado] Não foi possível reiniciar bot automaticamente:', restartError);
+    }
+
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error('Erro ao atualizar grupo:', error);
@@ -130,6 +173,27 @@ export async function DELETE(request: NextRequest) {
         { success: false, error: error.message },
         { status: 500 }
       );
+    }
+
+    // 1. Sincronizar grupos com .env.local
+    console.log('[Grupo Deletado] Sincronizando .env.local...');
+    const syncResult = await syncGroupsToEnv();
+
+    if (!syncResult.success) {
+      console.error('[Grupo Deletado] Falha ao sincronizar .env:', syncResult.error);
+    } else {
+      console.log('[Grupo Deletado] ✅ .env.local atualizado com', syncResult.groupsCount, 'grupos');
+    }
+
+    // 2. Reiniciar bot para aplicar mudanças
+    try {
+      const restartResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/bot/restart`, {
+        method: 'POST',
+      });
+      const restartData = await restartResponse.json();
+      console.log('[Grupo Deletado] Bot restart:', restartData);
+    } catch (restartError) {
+      console.warn('[Grupo Deletado] Não foi possível reiniciar bot automaticamente:', restartError);
     }
 
     return NextResponse.json({ success: true });
