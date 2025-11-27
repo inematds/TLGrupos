@@ -33,27 +33,63 @@ export async function POST(request: NextRequest) {
     }
 
     // Fazer upload do comprovante para o Supabase Storage
-    const fileExt = filename?.split('.').pop() || 'png';
+    const fileExt = filename?.split('.').pop()?.toLowerCase() || 'png';
     const fileName = `comprovante_${cadastro_id}_${Date.now()}.${fileExt}`;
 
     // Converter base64 para buffer
     const base64Data = comprovante_base64.split(',')[1];
+    if (!base64Data) {
+      return NextResponse.json(
+        { success: false, error: 'Formato de arquivo inválido' },
+        { status: 400 }
+      );
+    }
+
     const buffer = Buffer.from(base64Data, 'base64');
+
+    // Determinar content type correto
+    let contentType = 'application/octet-stream';
+    if (fileExt === 'pdf') {
+      contentType = 'application/pdf';
+    } else if (['jpg', 'jpeg'].includes(fileExt)) {
+      contentType = 'image/jpeg';
+    } else if (fileExt === 'png') {
+      contentType = 'image/png';
+    } else if (fileExt === 'gif') {
+      contentType = 'image/gif';
+    } else if (fileExt === 'webp') {
+      contentType = 'image/webp';
+    }
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('comprovantes')
       .upload(fileName, buffer, {
-        contentType: `image/${fileExt}`,
+        contentType,
         upsert: false,
       });
 
     if (uploadError) {
       console.error('Erro ao fazer upload:', uploadError);
+
+      // Verificar se o bucket existe
+      if (uploadError.message?.includes('Bucket not found')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Bucket de armazenamento não configurado. Contate o administrador.',
+            details: 'Crie um bucket chamado "comprovantes" no Supabase Storage'
+          },
+          { status: 500 }
+        );
+      }
+
       return NextResponse.json(
-        { success: false, error: 'Erro ao fazer upload do arquivo' },
+        { success: false, error: `Erro ao fazer upload: ${uploadError.message}` },
         { status: 500 }
       );
     }
+
+    console.log(`✅ Upload realizado: ${fileName} (${contentType})`);
 
     // Obter URL pública do arquivo
     const { data: urlData } = supabase.storage
