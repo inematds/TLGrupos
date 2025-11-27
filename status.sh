@@ -39,13 +39,20 @@ else
 fi
 echo ""
 
-# Verificar porta 3000
-echo "🔌 Porta 3000:"
-if lsof -Pi :3000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "   ✅ Em uso (Dashboard acessível)"
-    echo "   🌐 http://192.168.1.91:3000"
+# Verificar portas 3000 e 3001
+echo "🔌 Portas:"
+PORT_3000=$(lsof -Pi :3000 -sTCP:LISTEN -t 2>/dev/null)
+PORT_3001=$(lsof -Pi :3001 -sTCP:LISTEN -t 2>/dev/null)
+
+if [ ! -z "$PORT_3000" ]; then
+    echo "   ✅ Porta 3000 em uso (PID: $PORT_3000)"
+    echo "   🌐 http://157.180.72.42"
+elif [ ! -z "$PORT_3001" ]; then
+    echo "   ⚠️  Porta 3001 em uso (PID: $PORT_3001)"
+    echo "   🌐 http://157.180.72.42 (se Nginx configurado para 3001)"
+    echo "   💡 Recomendação: execute ./restart-all.sh para usar porta 3000"
 else
-    echo "   ❌ Livre (Dashboard não está rodando)"
+    echo "   ❌ Portas 3000 e 3001 livres (Dashboard não está rodando)"
 fi
 echo ""
 
