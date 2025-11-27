@@ -7,16 +7,24 @@ echo "🛑 Parando TLGrupos"
 echo "═══════════════════════════════════════════════════"
 echo ""
 
-# Parar processos na porta 3000
-echo "🔌 Parando porta 3000..."
-PORT_3000=$(lsof -ti:3000 2>/dev/null)
-if [ ! -z "$PORT_3000" ]; then
-    echo "   Matando processo na porta 3000 (PID: $PORT_3000)"
-    kill -9 $PORT_3000 2>/dev/null
-    echo "   ✅ Porta 3000 liberada"
-else
-    echo "   ℹ️  Porta 3000 já estava livre"
-fi
+# Parar processos nas portas 3000 e 3001
+echo "🔌 Parando portas 3000 e 3001..."
+for PORT in 3000 3001; do
+    PORT_PID=$(lsof -ti:$PORT 2>/dev/null)
+    if [ ! -z "$PORT_PID" ]; then
+        echo "   Matando processo na porta $PORT (PID: $PORT_PID)"
+        kill -9 $PORT_PID 2>/dev/null
+        sleep 1
+        # Verificar se matou
+        if lsof -ti:$PORT >/dev/null 2>&1; then
+            echo "   ⚠️  Tentando novamente..."
+            fuser -k ${PORT}/tcp 2>/dev/null
+        fi
+        echo "   ✅ Porta $PORT liberada"
+    else
+        echo "   ℹ️  Porta $PORT já estava livre"
+    fi
+done
 
 echo ""
 echo "🤖 Parando Bot do Telegram..."
