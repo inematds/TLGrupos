@@ -12,6 +12,34 @@ export async function GET(request: NextRequest) {
     // Buscar URL base da API (onde está hospedado o sistema)
     const apiUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://157.180.72.42';
 
+    // Buscar textos configuráveis do banco
+    const { data: configData } = await supabase
+      .from('system_config')
+      .select('chave, valor')
+      .like('chave', 'cadastro_%');
+
+    const texts: Record<string, string> = {};
+    configData?.forEach((config: any) => {
+      texts[config.chave] = config.valor || '';
+    });
+
+    // Textos padrão caso não existam no banco
+    const titulo = texts.cadastro_titulo || '📝 Cadastro de Membro';
+    const subtitulo = texts.cadastro_subtitulo || 'Preencha seus dados para se cadastrar';
+    const infoTitulo = texts.cadastro_info_titulo || 'ℹ️ Como Funciona o Sistema';
+    const infoTexto = texts.cadastro_info_texto || `Acesso Multi-Grupo: Ao se cadastrar, você terá acesso a TODOS os grupos do Telegram onde nosso bot está ativo.
+
+📋 O mesmo cadastro funciona em todos os grupos
+💡 Após o cadastro, você receberá um link para entrar nos grupos. Guarde esse link!
+⏰ Use o comando /status no Telegram para verificar seu tempo restante`;
+
+    const avisoTitulo = texts.cadastro_aviso_titulo || '⚠️ Importante - Gerenciamento de Acesso';
+    const avisoTexto = texts.cadastro_aviso_texto || `• Seu acesso possui uma data de vencimento
+• Quando vencer, você será removido de TODOS os grupos simultaneamente
+• Para renovar, entre em contato com os administradores antes do vencimento
+
+💡 Use /status no Telegram para verificar sua data de vencimento!`;
+
     // Gerar HTML standalone
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -242,8 +270,8 @@ export async function GET(request: NextRequest) {
 </head>
 <body>
     <div class="container">
-        <h1>📝 Cadastro de Membro</h1>
-        <p class="subtitle">Preencha seus dados para se cadastrar</p>
+        <h1>${titulo}</h1>
+        <p class="subtitle">${subtitulo}</p>
 
         <!-- Badge Telegram (se conectado) -->
         <div id="telegramBadge" class="hidden">
@@ -257,11 +285,8 @@ export async function GET(request: NextRequest) {
 
         <!-- Informações -->
         <div class="info-box">
-            <h3>ℹ️ Como Funciona o Sistema</h3>
-            <p><strong>Acesso Multi-Grupo:</strong> Ao se cadastrar, você terá acesso a <strong>TODOS os grupos</strong> do Telegram onde nosso bot está ativo.</p>
-            <p>📋 O mesmo cadastro funciona em todos os grupos</p>
-            <p>💡 Após o cadastro, você receberá um link para entrar nos grupos. Guarde esse link!</p>
-            <p>⏰ Use o comando <strong>/status</strong> no Telegram para verificar seu tempo restante</p>
+            <h3>${infoTitulo}</h3>
+            <p style="white-space: pre-wrap;">${infoTexto}</p>
         </div>
 
         <!-- Mensagens -->
@@ -329,6 +354,12 @@ export async function GET(request: NextRequest) {
 
             <button type="submit" id="submitBtn">Cadastrar</button>
         </form>
+
+        <!-- Aviso de Renovação -->
+        <div style="margin-top: 20px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 15px;">
+            <h4 style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 600;">${avisoTitulo}</h4>
+            <div style="font-size: 12px; color: #78350f; white-space: pre-wrap; line-height: 1.6;">${avisoTexto}</div>
+        </div>
 
         <!-- Box do Link de Convite (aparece após sucesso) -->
         <div id="inviteLinkBox" class="hidden invite-link-box">

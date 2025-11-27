@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from 'react';
 import { UserPlus, Mail, Phone, MapPin, Calendar, Target, Heart, Users, Info } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useCadastroTexts } from '@/hooks/useCadastroTexts';
 
 const UF_OPTIONS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
@@ -13,6 +14,7 @@ const UF_OPTIONS = [
 function CadastroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { texts, loading: textsLoading } = useCadastroTexts();
   const [loading, setLoading] = useState(false);
   const [mensagem, setMensagem] = useState('');
   const [inviteLink, setInviteLink] = useState<string | null>(null);
@@ -124,8 +126,8 @@ function CadastroContent() {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
               <UserPlus className="w-8 h-8 text-blue-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">Cadastro de Membro</h1>
-            <p className="mt-2 text-gray-600">Preencha seus dados para se cadastrar</p>
+            <h1 className="text-3xl font-bold text-gray-900">{texts.cadastro_titulo}</h1>
+            <p className="mt-2 text-gray-600">{texts.cadastro_subtitulo}</p>
 
             {/* Badge Telegram Conectado */}
             {telegramId && (
@@ -144,20 +146,10 @@ function CadastroContent() {
               <Info className="w-6 h-6 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                  ℹ️ Como Funciona o Sistema
+                  {texts.cadastro_info_titulo}
                 </h3>
-                <div className="space-y-2 text-sm text-blue-800">
-                  <p>
-                    <strong>Acesso Multi-Grupo:</strong> Ao se cadastrar, você terá acesso a <strong>TODOS os grupos</strong> do Telegram onde nosso bot está ativo.
-                  </p>
-                  <ul className="ml-4 space-y-1 list-disc">
-                    <li>O mesmo cadastro funciona em todos os grupos</li>
-                    <li>A data de vencimento é compartilhada entre os grupos</li>
-                    <li>Use o comando <code className="bg-blue-100 px-1 py-0.5 rounded">/status</code> no Telegram para verificar seu tempo restante</li>
-                  </ul>
-                  <p className="mt-3 text-blue-700">
-                    💡 <strong>Dica:</strong> Após o cadastro, você receberá um link para entrar nos grupos. Guarde esse link!
-                  </p>
+                <div className="space-y-2 text-sm text-blue-800 whitespace-pre-wrap">
+                  {texts.cadastro_info_texto}
                 </div>
               </div>
             </div>
@@ -412,21 +404,10 @@ function CadastroContent() {
           {/* Informação sobre Renovação */}
           <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-yellow-900 mb-2">
-              ⚠️ Importante - Gerenciamento de Acesso
+              {texts.cadastro_aviso_titulo}
             </h4>
-            <div className="text-xs text-yellow-800 space-y-1">
-              <p>
-                • Seu acesso possui uma data de vencimento
-              </p>
-              <p>
-                • Quando vencer, você será <strong>removido de TODOS os grupos</strong> simultaneamente
-              </p>
-              <p>
-                • Para renovar, entre em contato com os administradores antes do vencimento
-              </p>
-              <p className="mt-2 text-yellow-700">
-                💡 Use <code className="bg-yellow-100 px-1 rounded">/status</code> no Telegram para verificar sua data de vencimento!
-              </p>
+            <div className="text-xs text-yellow-800 whitespace-pre-wrap">
+              {texts.cadastro_aviso_texto}
             </div>
           </div>
         </div>

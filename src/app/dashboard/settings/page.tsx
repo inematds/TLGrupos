@@ -9,6 +9,14 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
+  // Textos configuráveis do formulário
+  const [cadastroTitulo, setCadastroTitulo] = useState('');
+  const [cadastroSubtitulo, setCadastroSubtitulo] = useState('');
+  const [cadastroInfoTitulo, setCadastroInfoTitulo] = useState('');
+  const [cadastroInfoTexto, setCadastroInfoTexto] = useState('');
+  const [cadastroAvisoTitulo, setCadastroAvisoTitulo] = useState('');
+  const [cadastroAvisoTexto, setCadastroAvisoTexto] = useState('');
+
   // Carregar configurações
   useEffect(() => {
     loadConfigs();
@@ -22,9 +30,21 @@ export default function SettingsPage() {
       if (data.success && Array.isArray(data.data)) {
         const urlConfig = data.data.find((c: any) => c.chave === 'cadastro_url');
         const externoConfig = data.data.find((c: any) => c.chave === 'cadastro_externo');
+        const tituloConfig = data.data.find((c: any) => c.chave === 'cadastro_titulo');
+        const subtituloConfig = data.data.find((c: any) => c.chave === 'cadastro_subtitulo');
+        const infoTituloConfig = data.data.find((c: any) => c.chave === 'cadastro_info_titulo');
+        const infoTextoConfig = data.data.find((c: any) => c.chave === 'cadastro_info_texto');
+        const avisoTituloConfig = data.data.find((c: any) => c.chave === 'cadastro_aviso_titulo');
+        const avisoTextoConfig = data.data.find((c: any) => c.chave === 'cadastro_aviso_texto');
 
         if (urlConfig) setCadastroUrl(urlConfig.valor);
         if (externoConfig) setCadastroExterno(externoConfig.valor === 'true');
+        if (tituloConfig) setCadastroTitulo(tituloConfig.valor);
+        if (subtituloConfig) setCadastroSubtitulo(subtituloConfig.valor);
+        if (infoTituloConfig) setCadastroInfoTitulo(infoTituloConfig.valor);
+        if (infoTextoConfig) setCadastroInfoTexto(infoTextoConfig.valor);
+        if (avisoTituloConfig) setCadastroAvisoTitulo(avisoTituloConfig.valor);
+        if (avisoTextoConfig) setCadastroAvisoTexto(avisoTextoConfig.valor);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -36,24 +56,32 @@ export default function SettingsPage() {
     setMessage(null);
 
     try {
-      // Salvar cadastro_url
-      const urlResponse = await fetch('/api/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chave: 'cadastro_url', valor: cadastroUrl }),
-      });
+      const configs = [
+        { chave: 'cadastro_url', valor: cadastroUrl },
+        { chave: 'cadastro_externo', valor: cadastroExterno.toString() },
+        { chave: 'cadastro_titulo', valor: cadastroTitulo },
+        { chave: 'cadastro_subtitulo', valor: cadastroSubtitulo },
+        { chave: 'cadastro_info_titulo', valor: cadastroInfoTitulo },
+        { chave: 'cadastro_info_texto', valor: cadastroInfoTexto },
+        { chave: 'cadastro_aviso_titulo', valor: cadastroAvisoTitulo },
+        { chave: 'cadastro_aviso_texto', valor: cadastroAvisoTexto },
+      ];
 
-      // Salvar cadastro_externo
-      const externoResponse = await fetch('/api/config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chave: 'cadastro_externo', valor: cadastroExterno.toString() }),
-      });
+      const promises = configs.map(config =>
+        fetch('/api/config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config),
+        })
+      );
 
-      if (urlResponse.ok && externoResponse.ok) {
+      const responses = await Promise.all(promises);
+      const allOk = responses.every(r => r.ok);
+
+      if (allOk) {
         setMessage({ text: 'Configurações salvas com sucesso!', type: 'success' });
       } else {
-        throw new Error('Erro ao salvar configurações');
+        throw new Error('Erro ao salvar algumas configurações');
       }
     } catch (error: any) {
       setMessage({ text: error.message || 'Erro ao salvar', type: 'error' });
@@ -172,6 +200,109 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Textos do Formulário de Cadastro */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-bold text-gray-900">Textos do Formulário de Cadastro</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Título Principal
+                </label>
+                <input
+                  type="text"
+                  value={cadastroTitulo}
+                  onChange={(e) => setCadastroTitulo(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="📝 Cadastro de Membro"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subtítulo
+                </label>
+                <input
+                  type="text"
+                  value={cadastroSubtitulo}
+                  onChange={(e) => setCadastroSubtitulo(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Preencha seus dados para se cadastrar"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Título da Caixa de Informações (acima do formulário)
+              </label>
+              <input
+                type="text"
+                value={cadastroInfoTitulo}
+                onChange={(e) => setCadastroInfoTitulo(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="ℹ️ Como Funciona o Sistema"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Texto Informativo (acima do formulário)
+              </label>
+              <textarea
+                value={cadastroInfoTexto}
+                onChange={(e) => setCadastroInfoTexto(e.target.value)}
+                rows={6}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
+                placeholder="Acesso Multi-Grupo: Ao se cadastrar..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use quebras de linha para separar parágrafos. Pode usar emojis e formatação básica.
+              </p>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Título do Aviso de Renovação (abaixo do formulário)
+              </label>
+              <input
+                type="text"
+                value={cadastroAvisoTitulo}
+                onChange={(e) => setCadastroAvisoTitulo(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="⚠️ Importante - Gerenciamento de Acesso"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Texto do Aviso de Renovação (abaixo do formulário)
+              </label>
+              <textarea
+                value={cadastroAvisoTexto}
+                onChange={(e) => setCadastroAvisoTexto(e.target.value)}
+                rows={5}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
+                placeholder="• Seu acesso possui uma data de vencimento..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Use • para listas. Pode usar emojis e formatação básica.
+              </p>
+            </div>
+
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>⚠️ Nota:</strong> Após salvar, os textos serão atualizados tanto na página /cadastro quanto no arquivo cadastro.html que você baixar.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* General Settings */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Configurações Gerais</h2>
