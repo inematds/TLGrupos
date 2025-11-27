@@ -12,13 +12,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const chave = searchParams.get('chave');
 
-    let query = supabase.from('system_config').select('*');
-
     if (chave) {
-      query = query.eq('chave', chave).single();
+      // Buscar uma configuração específica
+      const { data, error } = await supabase
+        .from('system_config')
+        .select('*')
+        .eq('chave', chave)
+        .single();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      return NextResponse.json({
+        success: true,
+        data,
+      });
     }
 
-    const { data, error } = await query;
+    // Buscar todas as configurações
+    const { data, error } = await supabase
+      .from('system_config')
+      .select('*');
 
     if (error) {
       throw new Error(error.message);
