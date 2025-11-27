@@ -29,6 +29,34 @@ console.log(`🤖 [Webhook] Monitorando ${GROUP_IDS.length} grupo(s):`, GROUP_ID
 const DEFAULT_EXPIRY_DAYS = 30;
 
 /**
+ * Busca a URL configurada para o formulário de cadastro
+ */
+async function getCadastroUrl(): Promise<string> {
+  try {
+    const { data: configs } = await supabase
+      .from('system_config')
+      .select('chave, valor')
+      .in('chave', ['cadastro_url', 'cadastro_externo']);
+
+    if (configs && configs.length > 0) {
+      const cadastroUrlConfig = configs.find(c => c.chave === 'cadastro_url');
+      const cadastroExternoConfig = configs.find(c => c.chave === 'cadastro_externo');
+
+      // Se configurado para usar URL externa
+      if (cadastroExternoConfig?.valor === 'true' && cadastroUrlConfig?.valor) {
+        return cadastroUrlConfig.valor;
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao buscar URL de cadastro do banco:', error);
+  }
+
+  // Fallback: usar URL do sistema
+  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://157.180.72.42';
+  return `${baseUrl}/cadastro`;
+}
+
+/**
  * Auto-cadastra um membro quando detectado
  */
 async function autoRegisterMember(
@@ -317,9 +345,13 @@ bot.command('cadastro', async (ctx) => {
 
   console.log(`[Comando] /cadastro de ${user.first_name} (${user.id})`);
 
-  // Gerar URL de cadastro com o telegram_id
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://192.168.1.91:3000';
-  const cadastroUrl = `${baseUrl}/cadastro?telegram_id=${user.id}&username=${user.username || ''}&nome=${encodeURIComponent(user.first_name + (user.last_name ? ' ' + user.last_name : ''))}`;
+  // Buscar URL configurada no banco
+  const baseUrl = await getCadastroUrl();
+
+  // Adicionar parâmetros do Telegram
+  const cadastroUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}telegram_id=${user.id}&username=${user.username || ''}&nome=${encodeURIComponent(user.first_name + (user.last_name ? ' ' + user.last_name : ''))}`;
+
+  console.log(`[Cadastro] URL gerada: ${cadastroUrl}`);
 
   const mensagemTexto =
     `📝 Cadastro Completo\n\n` +
