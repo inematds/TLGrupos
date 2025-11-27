@@ -1,0 +1,83 @@
+-- Adiciona configurações de URLs de pagamento ao system_config
+
+-- Flag para usar URLs externas de pagamento
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_externo',
+  'false',
+  'Se true, usa URLs externas para páginas de pagamento',
+  'boolean'
+) ON CONFLICT (chave) DO NOTHING;
+
+-- URL externa para página de pagamento PIX
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_pix_url',
+  '',
+  'URL externa da página de pagamento PIX (ex: https://seusite.com/pix.html)',
+  'url'
+) ON CONFLICT (chave) DO NOTHING;
+
+-- URL externa para página de pagamento com cartão
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_card_url',
+  '',
+  'URL externa da página de pagamento com cartão (ex: https://seusite.com/card.html)',
+  'url'
+) ON CONFLICT (chave) DO NOTHING;
+
+-- Textos configuráveis para página de pagamento PIX
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_pix_titulo',
+  '💰 Pagamento via PIX',
+  'Título da página de pagamento PIX',
+  'text'
+) ON CONFLICT (chave) DO NOTHING;
+
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_pix_subtitulo',
+  'Faça o pagamento e envie o comprovante',
+  'Subtítulo da página de pagamento PIX',
+  'text'
+) ON CONFLICT (chave) DO NOTHING;
+
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_pix_instrucoes',
+  '1️⃣ Copie a chave PIX abaixo
+2️⃣ Faça o pagamento no seu banco
+3️⃣ Envie o comprovante (foto ou PDF)
+4️⃣ Aguarde a confirmação',
+  'Instruções de como fazer o pagamento PIX',
+  'textarea'
+) ON CONFLICT (chave) DO NOTHING;
+
+-- Textos configuráveis para página de pagamento com cartão
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_card_titulo',
+  '💳 Pagamento com Cartão',
+  'Título da página de pagamento com cartão',
+  'text'
+) ON CONFLICT (chave) DO NOTHING;
+
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_card_subtitulo',
+  'Preencha os dados do seu cartão',
+  'Subtítulo da página de pagamento com cartão',
+  'text'
+) ON CONFLICT (chave) DO NOTHING;
+
+INSERT INTO system_config (chave, valor, descricao, tipo)
+VALUES (
+  'payment_card_instrucoes',
+  '🔒 Seus dados estão seguros
+✅ Pagamento processado instantaneamente
+📱 Você receberá acesso imediato aos grupos',
+  'Instruções sobre pagamento com cartão',
+  'textarea'
+) ON CONFLICT (chave) DO NOTHING;

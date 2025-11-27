@@ -17,6 +17,13 @@ export default function SettingsPage() {
   const [cadastroAvisoTitulo, setCadastroAvisoTitulo] = useState('');
   const [cadastroAvisoTexto, setCadastroAvisoTexto] = useState('');
 
+  // Configurações de URLs de pagamento
+  const [paymentPixUrl, setPaymentPixUrl] = useState('');
+  const [paymentExterno, setPaymentExterno] = useState(false);
+  const [paymentPixTitulo, setPaymentPixTitulo] = useState('');
+  const [paymentPixSubtitulo, setPaymentPixSubtitulo] = useState('');
+  const [paymentPixInstrucoes, setPaymentPixInstrucoes] = useState('');
+
   // Carregar configurações
   useEffect(() => {
     loadConfigs();
@@ -37,6 +44,13 @@ export default function SettingsPage() {
         const avisoTituloConfig = data.data.find((c: any) => c.chave === 'cadastro_aviso_titulo');
         const avisoTextoConfig = data.data.find((c: any) => c.chave === 'cadastro_aviso_texto');
 
+        // Payment configs
+        const paymentPixUrlConfig = data.data.find((c: any) => c.chave === 'payment_pix_url');
+        const paymentExternoConfig = data.data.find((c: any) => c.chave === 'payment_externo');
+        const paymentPixTituloConfig = data.data.find((c: any) => c.chave === 'payment_pix_titulo');
+        const paymentPixSubtituloConfig = data.data.find((c: any) => c.chave === 'payment_pix_subtitulo');
+        const paymentPixInstrucoesConfig = data.data.find((c: any) => c.chave === 'payment_pix_instrucoes');
+
         if (urlConfig) setCadastroUrl(urlConfig.valor);
         if (externoConfig) setCadastroExterno(externoConfig.valor === 'true');
         if (tituloConfig) setCadastroTitulo(tituloConfig.valor);
@@ -45,6 +59,13 @@ export default function SettingsPage() {
         if (infoTextoConfig) setCadastroInfoTexto(infoTextoConfig.valor);
         if (avisoTituloConfig) setCadastroAvisoTitulo(avisoTituloConfig.valor);
         if (avisoTextoConfig) setCadastroAvisoTexto(avisoTextoConfig.valor);
+
+        // Set payment configs
+        if (paymentPixUrlConfig) setPaymentPixUrl(paymentPixUrlConfig.valor);
+        if (paymentExternoConfig) setPaymentExterno(paymentExternoConfig.valor === 'true');
+        if (paymentPixTituloConfig) setPaymentPixTitulo(paymentPixTituloConfig.valor);
+        if (paymentPixSubtituloConfig) setPaymentPixSubtitulo(paymentPixSubtituloConfig.valor);
+        if (paymentPixInstrucoesConfig) setPaymentPixInstrucoes(paymentPixInstrucoesConfig.valor);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -65,6 +86,11 @@ export default function SettingsPage() {
         { chave: 'cadastro_info_texto', valor: cadastroInfoTexto },
         { chave: 'cadastro_aviso_titulo', valor: cadastroAvisoTitulo },
         { chave: 'cadastro_aviso_texto', valor: cadastroAvisoTexto },
+        { chave: 'payment_pix_url', valor: paymentPixUrl },
+        { chave: 'payment_externo', valor: paymentExterno.toString() },
+        { chave: 'payment_pix_titulo', valor: paymentPixTitulo },
+        { chave: 'payment_pix_subtitulo', valor: paymentPixSubtitulo },
+        { chave: 'payment_pix_instrucoes', valor: paymentPixInstrucoes },
       ];
 
       const promises = configs.map(config =>
@@ -104,6 +130,25 @@ export default function SettingsPage() {
       document.body.removeChild(a);
 
       setMessage({ text: 'Arquivo cadastro.html baixado com sucesso!', type: 'success' });
+    } catch (error) {
+      setMessage({ text: 'Erro ao baixar arquivo', type: 'error' });
+    }
+  };
+
+  const downloadPaymentPixHtml = async () => {
+    try {
+      const response = await fetch('/api/generate-payment-pix-html');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'payment-pix.html';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setMessage({ text: 'Arquivo payment-pix.html baixado com sucesso!', type: 'success' });
     } catch (error) {
       setMessage({ text: 'Erro ao baixar arquivo', type: 'error' });
     }
@@ -192,6 +237,122 @@ export default function SettingsPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-3 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 flex items-center gap-2 transition-colors"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                  Testar URL
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Configurações de Pagamento PIX */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h2 className="text-lg font-bold text-gray-900">URLs de Pagamento PIX</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                URL da Página de Pagamento PIX
+              </label>
+              <input
+                type="url"
+                value={paymentPixUrl}
+                onChange={(e) => setPaymentPixUrl(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://seusite.com/payment-pix.html"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Esta URL será usada quando o usuário escolher pagamento via PIX
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div>
+                <h3 className="font-medium text-gray-900">Usar URL Externa</h3>
+                <p className="text-sm text-gray-600">
+                  Se ativado, usa a URL acima. Se desativado, usa página interna do sistema
+                </p>
+              </div>
+              <button
+                onClick={() => setPaymentExterno(!paymentExterno)}
+                className={`w-12 h-6 rounded-full relative transition-colors ${paymentExterno ? 'bg-green-600' : 'bg-gray-400'}`}
+              >
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${paymentExterno ? 'right-1' : 'left-1'}`}></div>
+              </button>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4">
+              <h3 className="font-medium text-gray-900 mb-3">Textos da Página PIX</h3>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Título
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentPixTitulo}
+                    onChange={(e) => setPaymentPixTitulo(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="💰 Pagamento via PIX"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subtítulo
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentPixSubtitulo}
+                    onChange={(e) => setPaymentPixSubtitulo(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Faça o pagamento e envie o comprovante"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Instruções
+                  </label>
+                  <textarea
+                    value={paymentPixInstrucoes}
+                    onChange={(e) => setPaymentPixInstrucoes(e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
+                    placeholder="1️⃣ Copie a chave PIX abaixo..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <p className="text-sm text-blue-800">
+                <strong>💡 Dica:</strong> Baixe o arquivo <code className="bg-blue-100 px-2 py-1 rounded">payment-pix.html</code> abaixo e hospede em qualquer servidor web (Netlify, Vercel, etc). Depois configure a URL acima.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={downloadPaymentPixHtml}
+                className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2 transition-colors"
+              >
+                <Download className="w-5 h-5" />
+                Baixar payment-pix.html
+              </button>
+
+              {paymentPixUrl && (
+                <a
+                  href={paymentPixUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-3 border-2 border-green-600 text-green-600 rounded-lg hover:bg-green-50 flex items-center gap-2 transition-colors"
                 >
                   <ExternalLink className="w-5 h-5" />
                   Testar URL
