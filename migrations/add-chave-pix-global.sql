@@ -4,6 +4,6 @@ INSERT INTO system_config (chave, valor, descricao, tipo)
 VALUES (
   'chave_pix_global',
   '',
-  'Chave PIX padrão do sistema, usada quando o plano não tem chave específica',
+  'Chave PIX padrão do sistema',
   'text'
 ) ON CONFLICT (chave) DO NOTHING;
