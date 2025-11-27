@@ -259,8 +259,9 @@ export async function GET(request: NextRequest) {
         <div class="info-box">
             <h3>ℹ️ Como Funciona o Sistema</h3>
             <p><strong>Acesso Multi-Grupo:</strong> Ao se cadastrar, você terá acesso a <strong>TODOS os grupos</strong> do Telegram onde nosso bot está ativo.</p>
-            <p>✅ Você receberá <strong>30 dias de acesso</strong> automaticamente</p>
+            <p>📋 O mesmo cadastro funciona em todos os grupos</p>
             <p>💡 Após o cadastro, você receberá um link para entrar nos grupos. Guarde esse link!</p>
+            <p>⏰ Use o comando <strong>/status</strong> no Telegram para verificar seu tempo restante</p>
         </div>
 
         <!-- Mensagens -->

@@ -151,7 +151,6 @@ function CadastroContent() {
                     <strong>Acesso Multi-Grupo:</strong> Ao se cadastrar, você terá acesso a <strong>TODOS os grupos</strong> do Telegram onde nosso bot está ativo.
                   </p>
                   <ul className="ml-4 space-y-1 list-disc">
-                    <li>Você receberá <strong>30 dias de acesso</strong> automaticamente</li>
                     <li>O mesmo cadastro funciona em todos os grupos</li>
                     <li>A data de vencimento é compartilhada entre os grupos</li>
                     <li>Use o comando <code className="bg-blue-100 px-1 py-0.5 rounded">/status</code> no Telegram para verificar seu tempo restante</li>
@@ -200,7 +199,7 @@ function CadastroContent() {
 
                   <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-xs text-blue-800 text-center font-medium">
-                      💡 Link exclusivo válido até {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
+                      💡 Link exclusivo para acesso ao grupo
                     </p>
                   </div>
 
@@ -413,11 +412,11 @@ function CadastroContent() {
           {/* Informação sobre Renovação */}
           <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-yellow-900 mb-2">
-              ⚠️ Importante - Renovação de Acesso
+              ⚠️ Importante - Gerenciamento de Acesso
             </h4>
             <div className="text-xs text-yellow-800 space-y-1">
               <p>
-                • Seu acesso expira automaticamente após <strong>30 dias</strong>
+                • Seu acesso possui uma data de vencimento
               </p>
               <p>
                 • Quando vencer, você será <strong>removido de TODOS os grupos</strong> simultaneamente
@@ -426,7 +425,7 @@ function CadastroContent() {
                 • Para renovar, entre em contato com os administradores antes do vencimento
               </p>
               <p className="mt-2 text-yellow-700">
-                💡 Use <code className="bg-yellow-100 px-1 rounded">/status</code> no Telegram para acompanhar seu tempo restante!
+                💡 Use <code className="bg-yellow-100 px-1 rounded">/status</code> no Telegram para verificar sua data de vencimento!
               </p>
             </div>
           </div>

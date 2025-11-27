@@ -223,9 +223,8 @@ bot.on('new_chat_members', async (ctx) => {
         try {
           await ctx.reply(
             `🎉 Bem-vindo(a) de volta, ${member.first_name}!\n\n` +
-            `Seu acesso foi reativado automaticamente.\n` +
-            `Você tem mais ${DEFAULT_EXPIRY_DAYS} dias de acesso.\n\n` +
-            `Use /status para verificar seu cadastro.`
+            `Seu acesso foi reativado automaticamente.\n\n` +
+            `Use /status para verificar sua data de vencimento.`
           );
         } catch (err) {
           console.error('[Webhook] Erro ao enviar mensagem de reativação:', err);
@@ -281,9 +280,8 @@ bot.on('new_chat_members', async (ctx) => {
         try {
           await ctx.reply(
             `🎉 Bem-vindo(a) ${member.first_name}!\n\n` +
-            `Você foi cadastrado automaticamente no sistema.\n` +
-            `Seu acesso expira em ${DEFAULT_EXPIRY_DAYS} dias.\n\n` +
-            `Use /status para verificar seu cadastro.`
+            `Você foi cadastrado automaticamente no sistema.\n\n` +
+            `Use /status para verificar sua data de vencimento.`
           );
         } catch (err) {
           console.error('[Webhook] Erro ao enviar boas-vindas:', err);
@@ -429,8 +427,7 @@ bot.command('registrar', async (ctx) => {
       `🎉 Cadastro realizado com sucesso!\n\n` +
       `👤 Nome: ${user.first_name}\n` +
       `🆔 ID: ${user.id}\n` +
-      `📅 Vencimento: ${expiryDate.toLocaleDateString('pt-BR')}\n` +
-      `⏰ Dias: ${DEFAULT_EXPIRY_DAYS} dias\n\n` +
+      `📅 Vencimento: ${expiryDate.toLocaleDateString('pt-BR')}\n\n` +
       `✅ Seu acesso está ativo!\n\n` +
       `Use /status para verificar a qualquer momento.`,
       { reply_to_message_id: ctx.message.message_id }
