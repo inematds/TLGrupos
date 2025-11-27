@@ -14,7 +14,7 @@ INSERT INTO system_config (chave, valor, descricao, tipo)
 VALUES (
   'payment_pix_url',
   '',
-  'URL externa da página de pagamento PIX (ex: https://seusite.com/pix.html)',
+  'URL externa da página de pagamento PIX',
   'url'
 ) ON CONFLICT (chave) DO NOTHING;
 
@@ -23,7 +23,7 @@ INSERT INTO system_config (chave, valor, descricao, tipo)
 VALUES (
   'payment_card_url',
   '',
-  'URL externa da página de pagamento com cartão (ex: https://seusite.com/card.html)',
+  'URL externa da página de pagamento com cartão',
   'url'
 ) ON CONFLICT (chave) DO NOTHING;
 

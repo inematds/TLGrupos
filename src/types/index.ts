@@ -156,6 +156,7 @@ export interface Plan {
   duracao_dias: number;
   ativo: boolean;
   ordem: number;
+  chave_pix?: string;
   created_at: string;
   updated_at: string;
 }
@@ -167,6 +168,7 @@ export interface CreatePlanInput {
   duracao_dias: number;
   ativo?: boolean;
   ordem?: number;
+  chave_pix?: string;
 }
 
 export interface UpdatePlanInput {
@@ -176,6 +178,7 @@ export interface UpdatePlanInput {
   duracao_dias?: number;
   ativo?: boolean;
   ordem?: number;
+  chave_pix?: string;
 }
 
 // Tipos para respostas da API

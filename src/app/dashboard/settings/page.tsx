@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const [paymentPixTitulo, setPaymentPixTitulo] = useState('');
   const [paymentPixSubtitulo, setPaymentPixSubtitulo] = useState('');
   const [paymentPixInstrucoes, setPaymentPixInstrucoes] = useState('');
+  const [chavePixGlobal, setChavePixGlobal] = useState('');
 
   // Carregar configurações
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function SettingsPage() {
         const paymentPixTituloConfig = data.data.find((c: any) => c.chave === 'payment_pix_titulo');
         const paymentPixSubtituloConfig = data.data.find((c: any) => c.chave === 'payment_pix_subtitulo');
         const paymentPixInstrucoesConfig = data.data.find((c: any) => c.chave === 'payment_pix_instrucoes');
+        const chavePixGlobalConfig = data.data.find((c: any) => c.chave === 'chave_pix_global');
 
         if (urlConfig) setCadastroUrl(urlConfig.valor);
         if (externoConfig) setCadastroExterno(externoConfig.valor === 'true');
@@ -66,6 +68,7 @@ export default function SettingsPage() {
         if (paymentPixTituloConfig) setPaymentPixTitulo(paymentPixTituloConfig.valor);
         if (paymentPixSubtituloConfig) setPaymentPixSubtitulo(paymentPixSubtituloConfig.valor);
         if (paymentPixInstrucoesConfig) setPaymentPixInstrucoes(paymentPixInstrucoesConfig.valor);
+        if (chavePixGlobalConfig) setChavePixGlobal(chavePixGlobalConfig.valor);
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
@@ -91,6 +94,7 @@ export default function SettingsPage() {
         { chave: 'payment_pix_titulo', valor: paymentPixTitulo },
         { chave: 'payment_pix_subtitulo', valor: paymentPixSubtitulo },
         { chave: 'payment_pix_instrucoes', valor: paymentPixInstrucoes },
+        { chave: 'chave_pix_global', valor: chavePixGlobal },
       ];
 
       const promises = configs.map(config =>
@@ -242,6 +246,40 @@ export default function SettingsPage() {
                   Testar URL
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* Chave PIX Global */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <h2 className="text-lg font-bold text-gray-900">Chave PIX Global</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Chave PIX Padrão do Sistema
+              </label>
+              <input
+                type="text"
+                value={chavePixGlobal}
+                onChange={(e) => setChavePixGlobal(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="email@exemplo.com, CPF, telefone ou chave aleatória"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Esta chave será usada quando um plano não tiver chave PIX específica configurada
+              </p>
+            </div>
+
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <p className="text-sm text-blue-800">
+                <strong>💡 Dica:</strong> Configure uma chave PIX global aqui e, se necessário, configure chaves diferentes para planos específicos na página de <strong>Planos de Acesso</strong>.
+              </p>
             </div>
           </div>
         </div>

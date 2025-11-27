@@ -16,6 +16,7 @@ export default function PlanosPage() {
     duracao_dias: 30,
     ativo: true,
     ordem: 0,
+    chave_pix: '',
   });
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function PlanosPage() {
       duracao_dias: 30,
       ativo: true,
       ordem: planos.length,
+      chave_pix: '',
     });
     setShowForm(true);
   }
@@ -60,6 +62,7 @@ export default function PlanosPage() {
       duracao_dias: plano.duracao_dias,
       ativo: plano.ativo,
       ordem: plano.ordem,
+      chave_pix: plano.chave_pix || '',
     });
     setShowForm(true);
   }
@@ -74,6 +77,7 @@ export default function PlanosPage() {
       duracao_dias: 30,
       ativo: true,
       ordem: 0,
+      chave_pix: '',
     });
   }
 
@@ -244,6 +248,23 @@ export default function PlanosPage() {
                 placeholder="Descrição do plano..."
                 rows={3}
               />
+            </div>
+
+            {/* Chave PIX */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Chave PIX (opcional)
+              </label>
+              <input
+                type="text"
+                value={formData.chave_pix}
+                onChange={(e) => setFormData({ ...formData, chave_pix: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="email@exemplo.com ou CPF ou telefone"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Se não preenchida, será usada a chave PIX global configurada nas configurações do sistema
+              </p>
             </div>
 
             {/* Ativo */}
