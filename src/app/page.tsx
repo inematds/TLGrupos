@@ -109,6 +109,188 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Instalação e Deploy */}
+        <section id="instalacao" className="mb-16">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-lg p-8 border-2 border-green-500">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+              <Play className="w-8 h-8 text-green-600" />
+              🚀 Instalação e Deploy na VPS
+            </h2>
+
+            {/* Requisitos */}
+            <div className="mb-8 bg-white rounded-lg p-6 border-l-4 border-blue-500">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">📋 Pré-requisitos</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>VPS com acesso SSH (Ubuntu 20.04+ recomendado)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>Node.js 18+ instalado</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>Git configurado</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>Conta Supabase (banco de dados)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                  <span>Bot do Telegram criado (@BotFather)</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Passos de Instalação */}
+            <div className="space-y-6">
+              {/* Passo 1 - Clonar */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-green-500">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">1</span>
+                  <h3 className="text-xl font-bold text-gray-900">Clonar o Repositório</h3>
+                </div>
+                <pre className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+                  <code>{`# Conectar na VPS
+ssh seu-usuario@seu-ip
+
+# Clonar o projeto
+git clone https://github.com/inematds/TLGrupos.git
+cd TLGrupos`}</code>
+                </pre>
+              </div>
+
+              {/* Passo 2 - Configurar .env.local */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-blue-500">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">2</span>
+                  <h3 className="text-xl font-bold text-gray-900">Configurar Variáveis de Ambiente</h3>
+                </div>
+                <p className="text-gray-600 mb-3">Crie o arquivo <code className="bg-gray-100 px-2 py-1 rounded">.env.local</code> com:</p>
+                <pre className="bg-gray-900 text-blue-400 p-4 rounded-lg overflow-x-auto text-sm">
+                  <code>{`# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sua-chave-anonima
+SUPABASE_SERVICE_ROLE_KEY=sua-chave-service-role
+
+# Telegram
+TELEGRAM_BOT_TOKEN=seu-token-do-bot
+TELEGRAM_GROUP_ID=-1002242190548,-1002466217981
+
+# Email (Resend)
+RESEND_API_KEY=sua-chave-resend
+
+# URLs
+NEXT_PUBLIC_APP_URL=http://seu-ip-vps`}</code>
+                </pre>
+              </div>
+
+              {/* Passo 3 - Instalar PM2 */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-purple-500">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">3</span>
+                  <h3 className="text-xl font-bold text-gray-900">Instalar PM2 (Gerenciador de Processos)</h3>
+                </div>
+                <pre className="bg-gray-900 text-purple-400 p-4 rounded-lg overflow-x-auto">
+                  <code>{`npm install -g pm2`}</code>
+                </pre>
+                <p className="text-sm text-gray-600 mt-3">
+                  <strong>PM2</strong> mantém o sistema rodando 24/7 e reinicia automaticamente em caso de erros.
+                </p>
+              </div>
+
+              {/* Passo 4 - Startar o Sistema */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-green-500">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">4</span>
+                  <h3 className="text-xl font-bold text-gray-900">Startar o Sistema em Produção</h3>
+                </div>
+                <pre className="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto">
+                  <code>{`# Dar permissão de execução
+chmod +x prod-start.sh
+
+# Iniciar tudo (Dashboard + Bot)
+./prod-start.sh`}</code>
+                </pre>
+                <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                  <p className="text-sm text-green-800">
+                    ✅ <strong>O script irá:</strong> Instalar dependências → Fazer build → Iniciar com PM2 → Salvar configuração
+                  </p>
+                </div>
+              </div>
+
+              {/* Passo 5 - Verificar Status */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-yellow-500">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">5</span>
+                  <h3 className="text-xl font-bold text-gray-900">Verificar se está Rodando</h3>
+                </div>
+                <pre className="bg-gray-900 text-yellow-400 p-4 rounded-lg overflow-x-auto">
+                  <code>{`# Ver processos ativos
+pm2 status
+
+# Ver logs em tempo real
+pm2 logs
+
+# Acessar no navegador
+http://seu-ip-vps`}</code>
+                </pre>
+              </div>
+
+              {/* Passo 6 - Auto-Start */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-orange-500">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">6</span>
+                  <h3 className="text-xl font-bold text-gray-900">Configurar Auto-Start no Boot</h3>
+                </div>
+                <pre className="bg-gray-900 text-orange-400 p-4 rounded-lg overflow-x-auto">
+                  <code>{`pm2 startup
+pm2 save`}</code>
+                </pre>
+                <p className="text-sm text-gray-600 mt-3">
+                  Isso garante que o sistema reinicie automaticamente se a VPS reiniciar.
+                </p>
+              </div>
+            </div>
+
+            {/* Comandos Úteis */}
+            <div className="mt-8 bg-gray-900 text-white rounded-lg p-6">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Settings className="w-6 h-6" />
+                🛠️ Comandos Úteis
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-gray-400 mb-2">Gerenciamento:</p>
+                  <code className="block bg-gray-800 p-2 rounded mb-1">./prod-restart.sh</code>
+                  <code className="block bg-gray-800 p-2 rounded mb-1">./prod-stop.sh</code>
+                  <code className="block bg-gray-800 p-2 rounded">./prod-status.sh</code>
+                </div>
+                <div>
+                  <p className="text-gray-400 mb-2">PM2:</p>
+                  <code className="block bg-gray-800 p-2 rounded mb-1">pm2 logs</code>
+                  <code className="block bg-gray-800 p-2 rounded mb-1">pm2 monit</code>
+                  <code className="block bg-gray-800 p-2 rounded">pm2 restart all</code>
+                </div>
+              </div>
+            </div>
+
+            {/* Atualizar Sistema */}
+            <div className="mt-8 bg-blue-50 border-2 border-blue-500 rounded-lg p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">🔄 Como Atualizar o Sistema</h3>
+              <p className="text-gray-700 mb-3">Sempre que houver atualizações no GitHub:</p>
+              <pre className="bg-gray-900 text-cyan-400 p-4 rounded-lg overflow-x-auto">
+                <code>{`cd TLGrupos
+git pull origin main
+npm install
+./prod-restart.sh`}</code>
+              </pre>
+            </div>
+          </div>
+        </section>
+
         {/* Guia Rápido */}
         <section id="guia-rapido" className="mb-16">
           <div className="bg-white rounded-xl shadow-lg p-8">
