@@ -230,6 +230,7 @@ export interface Payment {
   invite_link?: string;
   email_sent?: boolean;
   notification_sent?: boolean;
+  invite_link_revoked?: boolean;
   // Joined data
   member?: Member;
   plan?: Plan;

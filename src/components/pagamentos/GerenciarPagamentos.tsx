@@ -38,11 +38,24 @@ interface PaymentFormData {
   plan_id: string;
   payment_method_id: string;
   valor: string;
-  dias_acesso: string;
+  status: string;
+  comprovante_url: string;
+  comprovante_hash: string;
   descricao: string;
   observacoes: string;
-  comprovante_url: string;
   pix_chave: string;
+  pix_txid: string;
+  pix_e2eid: string;
+  data_pagamento: string;
+  data_vencimento: string;
+  data_aprovacao: string;
+  data_expiracao: string;
+  dias_acesso: string;
+  aprovado_por: string;
+  rejeitado_por: string;
+  motivo_rejeicao: string;
+  email: string;
+  invite_link: string;
 }
 
 export default function GerenciarPagamentos() {
@@ -70,11 +83,24 @@ export default function GerenciarPagamentos() {
     plan_id: '',
     payment_method_id: '',
     valor: '',
-    dias_acesso: '30',
+    status: 'pendente',
+    comprovante_url: '',
+    comprovante_hash: '',
     descricao: '',
     observacoes: '',
-    comprovante_url: '',
     pix_chave: '',
+    pix_txid: '',
+    pix_e2eid: '',
+    data_pagamento: '',
+    data_vencimento: '',
+    data_aprovacao: '',
+    data_expiracao: '',
+    dias_acesso: '30',
+    aprovado_por: '',
+    rejeitado_por: '',
+    motivo_rejeicao: '',
+    email: '',
+    invite_link: '',
   });
 
   useEffect(() => {
@@ -315,11 +341,24 @@ export default function GerenciarPagamentos() {
           plan_id: '',
           payment_method_id: '',
           valor: '',
-          dias_acesso: '30',
+          status: 'pendente',
+          comprovante_url: '',
+          comprovante_hash: '',
           descricao: '',
           observacoes: '',
-          comprovante_url: '',
           pix_chave: '',
+          pix_txid: '',
+          pix_e2eid: '',
+          data_pagamento: '',
+          data_vencimento: '',
+          data_aprovacao: '',
+          data_expiracao: '',
+          dias_acesso: '30',
+          aprovado_por: '',
+          rejeitado_por: '',
+          motivo_rejeicao: '',
+          email: '',
+          invite_link: '',
         });
         loadPayments();
       } else {
@@ -391,11 +430,24 @@ export default function GerenciarPagamentos() {
           plan_id: '',
           payment_method_id: '',
           valor: '',
-          dias_acesso: '30',
+          status: 'pendente',
+          comprovante_url: '',
+          comprovante_hash: '',
           descricao: '',
           observacoes: '',
-          comprovante_url: '',
           pix_chave: '',
+          pix_txid: '',
+          pix_e2eid: '',
+          data_pagamento: '',
+          data_vencimento: '',
+          data_aprovacao: '',
+          data_expiracao: '',
+          dias_acesso: '30',
+          aprovado_por: '',
+          rejeitado_por: '',
+          motivo_rejeicao: '',
+          email: '',
+          invite_link: '',
         });
         loadPayments();
       } else {
@@ -416,11 +468,24 @@ export default function GerenciarPagamentos() {
       plan_id: payment.plan_id || '',
       payment_method_id: payment.payment_method_id || '',
       valor: payment.valor.toString(),
-      dias_acesso: payment.dias_acesso.toString(),
+      status: payment.status,
+      comprovante_url: payment.comprovante_url || '',
+      comprovante_hash: payment.comprovante_hash || '',
       descricao: payment.descricao || '',
       observacoes: payment.observacoes || '',
-      comprovante_url: payment.comprovante_url || '',
       pix_chave: payment.pix_chave || '',
+      pix_txid: payment.pix_txid || '',
+      pix_e2eid: payment.pix_e2eid || '',
+      data_pagamento: payment.data_pagamento || '',
+      data_vencimento: payment.data_vencimento || '',
+      data_aprovacao: payment.data_aprovacao || '',
+      data_expiracao: payment.data_expiracao || '',
+      dias_acesso: payment.dias_acesso.toString(),
+      aprovado_por: payment.aprovado_por || '',
+      rejeitado_por: payment.rejeitado_por || '',
+      motivo_rejeicao: payment.motivo_rejeicao || '',
+      email: payment.email || '',
+      invite_link: payment.invite_link || '',
     });
     setEditMode(true);
   };
@@ -759,147 +824,341 @@ export default function GerenciarPagamentos() {
             {editMode ? (
               // Modo de Edição - Formulário
               <form onSubmit={handleUpdatePayment} className="p-6 space-y-6">
-                {/* Membro */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Membro *
-                  </label>
-                  <select
-                    value={formData.member_id}
-                    onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Selecione um membro</option>
-                    {members && Array.isArray(members) && members.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.nome} - @{member.telegram_username}
-                      </option>
-                    ))}
-                  </select>
+                {/* SEÇÃO: CAMPOS NÃO EDITÁVEIS (SOMENTE VISUALIZAÇÃO) */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">Informações do Sistema (Somente Visualização)</h4>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    {/* ID */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">ID do Pagamento</label>
+                      <p className="text-gray-900 font-mono text-xs">{selectedPayment?.id}</p>
+                    </div>
+
+                    {/* Status Atual */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Status Atual</label>
+                      <div>{getStatusBadge(selectedPayment?.status || 'pendente', selectedPayment!)}</div>
+                    </div>
+
+                    {/* Created At */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Data de Criação</label>
+                      <p className="text-gray-900">{selectedPayment?.created_at ? new Date(selectedPayment.created_at).toLocaleString('pt-BR') : '-'}</p>
+                    </div>
+
+                    {/* Updated At */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Última Atualização</label>
+                      <p className="text-gray-900">{selectedPayment?.updated_at ? new Date(selectedPayment.updated_at).toLocaleString('pt-BR') : '-'}</p>
+                    </div>
+
+                    {/* Aprovado Por */}
+                    {formData.aprovado_por && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Aprovado Por</label>
+                        <p className="text-green-700 font-medium">{formData.aprovado_por}</p>
+                      </div>
+                    )}
+
+                    {/* Data Aprovação */}
+                    {formData.data_aprovacao && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Data de Aprovação</label>
+                        <p className="text-gray-900">{new Date(formData.data_aprovacao).toLocaleString('pt-BR')}</p>
+                      </div>
+                    )}
+
+                    {/* Rejeitado Por */}
+                    {formData.rejeitado_por && (
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Rejeitado Por</label>
+                        <p className="text-red-700 font-medium">{formData.rejeitado_por}</p>
+                      </div>
+                    )}
+
+                    {/* Motivo Rejeição */}
+                    {formData.motivo_rejeicao && (
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Motivo da Rejeição</label>
+                        <p className="text-red-700">{formData.motivo_rejeicao}</p>
+                      </div>
+                    )}
+
+                    {/* Link de Convite */}
+                    {formData.invite_link && (
+                      <div className="col-span-2">
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Link de Convite Gerado</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={formData.invite_link}
+                            readOnly
+                            className="flex-1 px-2 py-1 border border-gray-300 rounded bg-white text-xs font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(formData.invite_link);
+                              alert('Link copiado!');
+                            }}
+                            className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                          >
+                            Copiar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Plano */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Plano (opcional)
-                  </label>
-                  <select
-                    value={formData.plan_id}
-                    onChange={(e) => handlePlanChange(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Sem plano específico</option>
-                    {plans && Array.isArray(plans) && plans.map((plan) => (
-                      <option key={plan.id} value={plan.id}>
-                        {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* SEÇÃO: CAMPOS EDITÁVEIS */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700 border-b border-gray-200 pb-2">Informações Editáveis</h4>
 
-                {/* Forma de Pagamento */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Forma de Pagamento
-                  </label>
-                  <select
-                    value={formData.payment_method_id}
-                    onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Selecione uma forma</option>
-                    {formasPagamento && Array.isArray(formasPagamento) && formasPagamento.filter(f => f.ativo).map((forma) => (
-                      <option key={forma.id} value={forma.id}>
-                        {forma.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Valor e Dias */}
-                <div className="grid grid-cols-2 gap-4">
+                  {/* Membro */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Valor (R$) *
+                      Membro *
                     </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.valor}
-                      onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                    <select
+                      value={formData.member_id}
+                      onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       required
-                    />
+                    >
+                      <option value="">Selecione um membro</option>
+                      {members && Array.isArray(members) && members.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.nome} - @{member.telegram_username}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+
+                  {/* Email do Membro */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Dias de Acesso *
+                      Email
                     </label>
                     <input
-                      type="number"
-                      value={formData.dias_acesso}
-                      onChange={(e) => setFormData({ ...formData, dias_acesso: e.target.value })}
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      required
+                      placeholder="email@exemplo.com"
                     />
                   </div>
-                </div>
 
-                {/* Descrição */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descrição
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ex: Pagamento mensal"
-                  />
-                </div>
+                  {/* Plano */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Plano (opcional)
+                    </label>
+                    <select
+                      value={formData.plan_id}
+                      onChange={(e) => handlePlanChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Sem plano específico</option>
+                      {plans && Array.isArray(plans) && plans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* Observações */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Observações
-                  </label>
-                  <textarea
-                    value={formData.observacoes}
-                    onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Observações adicionais..."
-                  />
-                </div>
+                  {/* Forma de Pagamento */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Forma de Pagamento
+                    </label>
+                    <select
+                      value={formData.payment_method_id}
+                      onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Selecione uma forma</option>
+                      {formasPagamento && Array.isArray(formasPagamento) && formasPagamento.filter(f => f.ativo).map((forma) => (
+                        <option key={forma.id} value={forma.id}>
+                          {forma.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* Comprovante URL */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL do Comprovante
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.comprovante_url}
-                    onChange={(e) => setFormData({ ...formData, comprovante_url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://..."
-                  />
-                </div>
+                  {/* Valor e Dias */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Valor (R$) *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={formData.valor}
+                        onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Dias de Acesso *
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.dias_acesso}
+                        onChange={(e) => setFormData({ ...formData, dias_acesso: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
 
-                {/* Chave PIX */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Chave PIX Utilizada
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.pix_chave}
-                    onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="email@exemplo.com"
-                  />
+                  {/* Descrição */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Descrição
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.descricao}
+                      onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Ex: Pagamento mensal"
+                    />
+                  </div>
+
+                  {/* Observações */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Observações
+                    </label>
+                    <textarea
+                      value={formData.observacoes}
+                      onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Observações adicionais..."
+                    />
+                  </div>
+
+                  {/* Comprovante URL */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      URL do Comprovante
+                    </label>
+                    <input
+                      type="url"
+                      value={formData.comprovante_url}
+                      onChange={(e) => setFormData({ ...formData, comprovante_url: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  {/* Comprovante Hash */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Hash do Comprovante
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.comprovante_hash}
+                      onChange={(e) => setFormData({ ...formData, comprovante_hash: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      placeholder="Hash SHA-256"
+                    />
+                  </div>
+
+                  {/* Informações PIX */}
+                  <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                    <h5 className="text-sm font-semibold text-blue-900">Informações PIX</h5>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Chave PIX Utilizada
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.pix_chave}
+                        onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="email@exemplo.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        PIX TXID (ID da Transação)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.pix_txid}
+                        onChange={(e) => setFormData({ ...formData, pix_txid: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="ID da transação PIX"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        PIX E2EID (End-to-End ID)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.pix_e2eid}
+                        onChange={(e) => setFormData({ ...formData, pix_e2eid: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        placeholder="End-to-end ID do PIX"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Datas */}
+                  <div className="bg-purple-50 p-4 rounded-lg space-y-3">
+                    <h5 className="text-sm font-semibold text-purple-900">Datas</h5>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Data do Pagamento
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={formData.data_pagamento ? new Date(formData.data_pagamento).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Data de Vencimento
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={formData.data_vencimento ? new Date(formData.data_vencimento).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Data de Expiração do Acesso
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={formData.data_expiracao ? new Date(formData.data_expiracao).toISOString().slice(0, 16) : ''}
+                          onChange={(e) => setFormData({ ...formData, data_expiracao: e.target.value ? new Date(e.target.value).toISOString() : '' })}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Botões do Formulário */}
