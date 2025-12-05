@@ -98,7 +98,7 @@ export default function PagamentosPage() {
       </div>
 
       {/* Tab Content */}
-      <main className="px-8 py-8 max-w-7xl mx-auto">
+      <main className="px-8 py-8">
         {activeTab === 'formas' && <FormasPagamento />}
         {activeTab === 'validar' && <ValidarPagamentos />}
         {activeTab === 'gerenciar' && <GerenciarPagamentos />}

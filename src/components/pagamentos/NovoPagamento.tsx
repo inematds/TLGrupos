@@ -224,9 +224,8 @@ export default function NovoPagamento() {
   };
 
   return (
-    <div>
-      <div className="max-w-2xl mx-auto">
-        {/* Busca de Membro */}
+    <div className="max-w-4xl mx-auto">
+      {/* Busca de Membro */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <User className="w-5 h-5" />
@@ -417,7 +416,6 @@ export default function NovoPagamento() {
             </div>
           </form>
         )}
-      </div>
     </div>
   );
 }

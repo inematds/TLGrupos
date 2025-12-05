@@ -384,9 +384,8 @@ export default function GerenciarPagamentos() {
 
   return (
     <div>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+      {/* Header */}
+      <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               Gerenciar Pagamentos
@@ -606,7 +605,6 @@ export default function GerenciarPagamentos() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modais serão adicionados na próxima parte devido ao limite de tamanho */}
     </div>
