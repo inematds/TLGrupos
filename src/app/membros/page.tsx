@@ -9,7 +9,7 @@ import CadastroPublico from '@/components/membros/CadastroPublico';
 type Tab = 'gerenciar' | 'novo' | 'cadastro';
 
 export default function MembrosPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('gerenciar');
+  const [activeTab, setActiveTab] = useState<Tab>('novo');
 
   const tabs = [
     {
