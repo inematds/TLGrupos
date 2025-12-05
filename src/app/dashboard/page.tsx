@@ -131,18 +131,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200">
-          <div className="px-8 py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm text-gray-500 mt-1">Visão geral do sistema</p>
-            </div>
+    <>
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="px-8 py-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-1">Visão geral do sistema</p>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main className="px-8 py-8">
+      <main className="px-8 py-8">
         {/* Estatísticas Principais */}
         {stats && (
           <>
@@ -434,6 +434,6 @@ export default function DashboardPage() {
           </table>
         </div>
       </main>
-    </div>
+    </>
   );
 }
