@@ -108,7 +108,7 @@ export default function MembersPage() {
   }
 
   async function handleDelete(member: Member) {
-    if (!confirm(`Tem certeza que deseja remover ${member.nome}?`)) {
+    if (!confirm(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nDeseja EXCLUIR PERMANENTEMENTE ${member.nome} do banco de dados?\n\nEsta ação NÃO apenas marca como "removido", mas DELETE o registro completamente.\n\nPara apenas remover do grupo, altere o status para "removido" na edição.`)) {
       return;
     }
 
@@ -120,13 +120,13 @@ export default function MembersPage() {
       const data = await res.json();
 
       if (data.success) {
-        alert('Membro removido com sucesso!');
+        alert('Membro excluído permanentemente com sucesso!');
         fetchMembers();
       } else {
-        alert(`Erro ao remover: ${data.error}`);
+        alert(`Erro ao excluir: ${data.error}`);
       }
     } catch (error: any) {
-      alert(`Erro ao remover: ${error.message}`);
+      alert(`Erro ao excluir: ${error.message}`);
     }
   }
 
@@ -369,7 +369,7 @@ export default function MembersPage() {
                           <button
                             onClick={() => handleDelete(member)}
                             className="text-red-600 hover:text-red-900"
-                            title="Remover"
+                            title="Excluir permanentemente (IRREVERSÍVEL)"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Script para iniciar todo o sistema TLGrupos
-# Uso: ./start-all.sh
+# Script para iniciar todo o sistema TLGrupos (DESENVOLVIMENTO)
+# Uso: ./dev-start.sh
+# Produção: use pm2 start all
 
 echo "🚀 Iniciando TLGrupos"
 echo "═══════════════════════════════════════════════════"

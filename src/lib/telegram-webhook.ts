@@ -128,6 +128,90 @@ async function autoRegisterMember(
 }
 
 /**
+ * Atualiza banco de dados após entrada no grupo (3 tentativas)
+ */
+async function atualizarBancoDadosEntrada(inviteLinkUsed: string, member: any) {
+  // 1. Busca o access_code pelo link
+  const { data: accessCode, error: erroBusca } = await supabase
+    .from('payment_access_codes')
+    .select('*')
+    .eq('invite_link', inviteLinkUsed)
+    .single();
+
+  if (erroBusca) throw new Error(`Erro ao buscar access code: ${erroBusca.message}`);
+  if (!accessCode) throw new Error('Access code não encontrado no banco');
+
+  // 2. Atualiza payment_access_codes (marca como usado)
+  const { error: erroAccessCode } = await supabase
+    .from('payment_access_codes')
+    .update({
+      usado: true,
+      data_acesso: new Date().toISOString(),
+      telegram_user_id_acesso: member.id,
+      status: 'usado'
+    })
+    .eq('id', accessCode.id);
+
+  if (erroAccessCode) throw new Error(`Erro ao atualizar access_code: ${erroAccessCode.message}`);
+
+  // 3. Atualiza payments (APENAS registra acesso, NÃO atualiza datas)
+  const { error: erroPayment } = await supabase
+    .from('payments')
+    .update({
+      link_acessado: true,
+      data_acesso: new Date().toISOString(),
+      entrada_confirmada: true
+    })
+    .eq('id', accessCode.payment_id);
+
+  if (erroPayment) throw new Error(`Erro ao atualizar payment: ${erroPayment.message}`);
+
+  // 4. Atualiza members (APENAS registra acesso, NÃO atualiza data_vencimento)
+  const { data: memberData } = await supabase
+    .from('members')
+    .select('total_acessos, data_primeiro_acesso')
+    .eq('id', accessCode.member_id)
+    .single();
+
+  const { error: erroMember } = await supabase
+    .from('members')
+    .update({
+      telegram_user_id: member.id,
+      no_grupo: true,
+      data_primeiro_acesso: memberData?.data_primeiro_acesso || new Date().toISOString(),
+      data_ultimo_acesso: new Date().toISOString(),
+      total_acessos: (memberData?.total_acessos || 0) + 1,
+      // ⚠️ Atualiza histórico de pagamento (snapshot)
+      ultimo_pagamento_valor: accessCode.valor_pago,
+      ultimo_pagamento_data: new Date().toISOString(),
+      ultimo_pagamento_forma: accessCode.forma_pagamento
+    })
+    .eq('id', accessCode.member_id);
+
+  if (erroMember) throw new Error(`Erro ao atualizar member: ${erroMember.message}`);
+
+  // 5. Log da ação
+  await supabase.from('logs').insert({
+    member_id: accessCode.member_id,
+    acao: 'entrada_via_pagamento',
+    detalhes: {
+      payment_id: accessCode.payment_id,
+      access_code_id: accessCode.id,
+      invite_link: inviteLinkUsed,
+      telegram_user_id: member.id,
+      telegram_username: member.username,
+      valor_pago: accessCode.valor_pago,
+      dias_acesso: accessCode.dias_acesso
+    },
+    telegram_user_id: member.id,
+    telegram_username: member.username,
+    executado_por: 'sistema'
+  });
+
+  return accessCode;
+}
+
+/**
  * Handler para novos membros entrando no grupo
  */
 bot.on('new_chat_members', async (ctx) => {
@@ -137,6 +221,9 @@ bot.on('new_chat_members', async (ctx) => {
   if (!GROUP_IDS.includes(chatId)) return;
 
   const newMembers = ctx.message.new_chat_members;
+  const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID
+    ? parseInt(process.env.TELEGRAM_ADMIN_CHAT_ID)
+    : null;
 
   for (const member of newMembers) {
     // Ignorar bots
@@ -148,6 +235,82 @@ bot.on('new_chat_members', async (ctx) => {
     const inviteLinkUsed = (ctx.message as any).invite_link?.invite_link;
     console.log(`[Webhook] Link usado: ${inviteLinkUsed || 'desconhecido'}`);
 
+    // ⭐ NOVO: Primeiro verifica se é um link de pagamento
+    if (inviteLinkUsed) {
+      const { data: paymentAccessCode } = await supabase
+        .from('payment_access_codes')
+        .select('*')
+        .eq('invite_link', inviteLinkUsed)
+        .single();
+
+      if (paymentAccessCode) {
+        console.log(`[Webhook] Link de PAGAMENTO detectado! Payment ID: ${paymentAccessCode.payment_id}`);
+
+        // Tenta atualizar banco 3 vezes
+        const MAX_RETRIES = 3;
+        let sucesso = false;
+
+        for (let tentativa = 1; tentativa <= MAX_RETRIES; tentativa++) {
+          try {
+            await atualizarBancoDadosEntrada(inviteLinkUsed, member);
+            sucesso = true;
+            console.log(`[Webhook] ✅ Banco atualizado com sucesso na tentativa ${tentativa}`);
+            break;
+          } catch (error: any) {
+            console.error(`[Webhook] ❌ Tentativa ${tentativa}/${MAX_RETRIES} falhou:`, error.message);
+
+            if (tentativa < MAX_RETRIES) {
+              // Aguarda antes de tentar novamente (100ms, 200ms, 400ms)
+              await new Promise(resolve => setTimeout(resolve, 100 * tentativa));
+            } else {
+              // Falhou após 3 tentativas - avisa admin
+              console.error(`[Webhook] ❌ FALHOU após ${MAX_RETRIES} tentativas`);
+
+              if (ADMIN_CHAT_ID) {
+                try {
+                  await bot.telegram.sendMessage(
+                    ADMIN_CHAT_ID,
+                    `⚠️ ERRO ao registrar entrada no banco\n\n` +
+                    `👤 Usuário: ${member.first_name} ${member.last_name || ''}\n` +
+                    `🆔 ID Telegram: ${member.id}\n` +
+                    `📱 Username: @${member.username || 'sem username'}\n` +
+                    `🔗 Link usado: ${inviteLinkUsed}\n` +
+                    `❌ Erro: ${error.message}\n\n` +
+                    `✅ O usuário JÁ ESTÁ NO GRUPO\n` +
+                    `⚠️ Mas NÃO foi registrado no banco de dados\n\n` +
+                    `🔧 Tentativas: ${MAX_RETRIES}x\n` +
+                    `💰 Payment ID: ${paymentAccessCode.payment_id}`
+                  );
+                } catch (telegramError) {
+                  console.error('[Webhook] Erro ao enviar mensagem para admin:', telegramError);
+                }
+              }
+            }
+          }
+        }
+
+        // Se teve sucesso, envia mensagem de boas-vindas
+        if (sucesso) {
+          try {
+            const vencimento = new Date(paymentAccessCode.data_vencimento_acesso);
+            await ctx.reply(
+              `🎉 Bem-vindo(a) ${member.first_name}!\n\n` +
+              `✅ Seu pagamento foi confirmado\n` +
+              `📅 Acesso válido até: ${vencimento.toLocaleDateString('pt-BR')}\n` +
+              `⏰ Dias de acesso: ${paymentAccessCode.dias_acesso} dias\n\n` +
+              `Use /status para verificar seu cadastro.`
+            );
+          } catch (err) {
+            console.error('[Webhook] Erro ao enviar boas-vindas:', err);
+          }
+        }
+
+        // Pula o processamento antigo (já processou como pagamento)
+        continue;
+      }
+    }
+
+    // ⭐ Fluxo ANTIGO: links normais ou auto-cadastro
     // Verificar se o membro já existe no banco pelo telegram_user_id
     let existing = await getMemberByTelegramId(member.id);
 
@@ -166,7 +329,7 @@ bot.on('new_chat_members', async (ctx) => {
       }
     }
 
-    // Se não encontrou ainda, tentar pelo invite_link usado
+    // Se não encontrou ainda, tentar pelo invite_link usado (sistema antigo)
     if (!existing && inviteLinkUsed) {
       console.log(`[Webhook] Não encontrado, buscando por invite_link: ${inviteLinkUsed}`);
       const { data } = await supabase

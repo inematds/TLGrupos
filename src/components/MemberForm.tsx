@@ -2,19 +2,17 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import PlanSelector from './PlanSelector';
-import { Plan } from '@/types';
 
 const UF_OPTIONS = [
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
   'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO', 'EX'
 ];
 
 interface MemberFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (memberId?: string) => void;
 }
 
 export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormProps) {
@@ -22,19 +20,17 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
     nome: '',
     telegram_username: '',
     telegram_user_id: '',
-    data_vencimento: '',
-    plan_id: '',
     email: '',
     telefone: '',
     cidade: '',
     uf: '',
     data_nascimento: '',
+    data_vencimento: '2000-01-01',
     nicho: '',
     interesse: '',
     grupo_favorito: '',
     observacoes: '',
   });
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,20 +42,6 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
     setError(null);
   };
 
-  const handlePlanSelect = (planId: string, plan: Plan) => {
-    setSelectedPlan(plan);
-    setFormData((prev) => ({ ...prev, plan_id: planId }));
-
-    // Calcular data de vencimento baseada no plano
-    const hoje = new Date();
-    const dataVencimento = new Date(hoje);
-    dataVencimento.setDate(dataVencimento.getDate() + plan.duracao_dias);
-
-    // Formatar como YYYY-MM-DD para o input date
-    const dataFormatada = dataVencimento.toISOString().split('T')[0];
-    setFormData((prev) => ({ ...prev, data_vencimento: dataFormatada }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -67,25 +49,9 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
     setSuccess(null);
 
     try {
-      // Preparar dados para envio
-      // Adiciona horário meio-dia UTC para evitar mudança de data devido a timezone
-      const formatDateForSave = (dateStr: string) => {
-        if (!dateStr) return dateStr;
-        // Se já tem horário, mantém como está
-        if (dateStr.includes('T')) return dateStr;
-        // Se é apenas data (YYYY-MM-DD), adiciona meio-dia UTC
-        return `${dateStr}T12:00:00.000Z`;
-      };
-
       const dataToSend: any = {
         nome: formData.nome.trim(),
-        data_vencimento: formatDateForSave(formData.data_vencimento),
       };
-
-      // Adicionar plan_id se selecionado
-      if (formData.plan_id) {
-        dataToSend.plan_id = formData.plan_id;
-      }
 
       // Adicionar campos opcionais se preenchidos
       if (formData.telegram_username.trim()) {
@@ -132,6 +98,11 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
         dataToSend.observacoes = formData.observacoes.trim();
       }
 
+      // Adicionar data de vencimento (sempre envia, com valor padrão 01/01/2000)
+      if (formData.data_vencimento) {
+        dataToSend.data_vencimento = formData.data_vencimento;
+      }
+
       // Enviar para API
       const response = await fetch('/api/members', {
         method: 'POST',
@@ -153,28 +124,29 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
         inviteLink: result.inviteLink,
       });
 
+      // Capturar ID do membro criado
+      const memberId = result.member?.id || result.data?.id || result.id;
+
       // Limpar formulário
       setFormData({
         nome: '',
         telegram_username: '',
         telegram_user_id: '',
-        data_vencimento: '',
-        plan_id: '',
         email: '',
         telefone: '',
         cidade: '',
         uf: '',
         data_nascimento: '',
+        data_vencimento: '2000-01-01',
         nicho: '',
         interesse: '',
         grupo_favorito: '',
         observacoes: '',
       });
-      setSelectedPlan(null);
 
-      // Notificar componente pai
+      // Notificar componente pai com o ID do membro criado
       setTimeout(() => {
-        onSuccess();
+        onSuccess(memberId);
       }, 2000);
     } catch (err: any) {
       setError(err.message || 'Erro ao criar membro');
@@ -189,19 +161,17 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
         nome: '',
         telegram_username: '',
         telegram_user_id: '',
-        data_vencimento: '',
-        plan_id: '',
         email: '',
         telefone: '',
         cidade: '',
         uf: '',
         data_nascimento: '',
+        data_vencimento: '2000-01-01',
         nicho: '',
         interesse: '',
         grupo_favorito: '',
         observacoes: '',
       });
-      setSelectedPlan(null);
       setError(null);
       setSuccess(null);
       onClose();
@@ -284,50 +254,6 @@ export default function MemberForm({ isOpen, onClose, onSuccess }: MemberFormPro
               />
             </div>
 
-            {/* Seletor de Planos */}
-            <div>
-              <PlanSelector
-                selectedPlanId={formData.plan_id}
-                onSelect={handlePlanSelect}
-                required
-              />
-              {selectedPlan && (
-                <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                  <p className="text-sm text-blue-800">
-                    <strong>Plano selecionado:</strong> {selectedPlan.nome} - R$ {selectedPlan.valor.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Data de vencimento calculada automaticamente: {formData.data_vencimento}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Data de Vencimento */}
-            <div>
-              <label
-                htmlFor="data_vencimento"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Data de Vencimento {formData.plan_id ? '(calculada automaticamente)' : '*'}
-              </label>
-              <input
-                type="date"
-                id="data_vencimento"
-                name="data_vencimento"
-                value={formData.data_vencimento}
-                onChange={handleChange}
-                required
-                readOnly={!!formData.plan_id}
-                min={new Date().toISOString().split('T')[0]}
-                className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${formData.plan_id ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-              />
-              {formData.plan_id && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Ajustada automaticamente baseada no plano selecionado. Para alterar, mude o plano ou desmarque-o.
-                </p>
-              )}
-            </div>
           </div>
 
           {/* Campos do Telegram */}

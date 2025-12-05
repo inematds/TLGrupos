@@ -17,10 +17,15 @@ export const GROUP_IDS = process.env.TELEGRAM_GROUP_ID
   .map(id => parseInt(id.trim()))
   .filter(id => !isNaN(id));
 
-// Manter GROUP_ID para compatibilidade (usa o primeiro grupo da lista)
+// ⚠️ IMPORTANTE: GROUP_ID usa APENAS o primeiro grupo da lista (grupo principal)
+// - Este é o grupo que receberá os links de convite pagos
+// - Os demais grupos (GROUP_IDS) continuam com auto-cadastro ativo
+// - Exemplo: Se GROUP_IDS = [-1002242190548, -1002466217981, ...]
+//   Então GROUP_ID = -1002242190548 (apenas o primeiro)
 export const GROUP_ID = GROUP_IDS[0];
 
 console.log(`📱 Bot configurado para ${GROUP_IDS.length} grupo(s):`, GROUP_IDS);
+console.log(`🎯 Grupo principal para convites pagos: ${GROUP_ID}`);
 
 // Tipos úteis
 export interface TelegramUser {
@@ -34,10 +39,17 @@ export interface TelegramUser {
 
 /**
  * Adiciona um usuário ao grupo através de um invite link
+ * Usa o grupo principal configurado no banco ou fallback para GROUP_ID
  */
 export async function createInviteLink(userId: number, expiresAt?: Date) {
   try {
-    const invite = await bot.telegram.createChatInviteLink(GROUP_ID, {
+    // Importar dinamicamente para evitar circular dependency
+    const { getMainGroupId } = await import('./config');
+    const mainGroupId = await getMainGroupId();
+
+    console.log(`[Telegram] Gerando convite para grupo: ${mainGroupId}`);
+
+    const invite = await bot.telegram.createChatInviteLink(mainGroupId, {
       member_limit: 1, // Link único para 1 pessoa
       expire_date: expiresAt ? Math.floor(expiresAt.getTime() / 1000) : undefined,
     });
@@ -58,10 +70,17 @@ export async function createInviteLink(userId: number, expiresAt?: Date) {
 /**
  * Cria um link de convite genérico para o grupo (sem limite de membros)
  * Use quando não houver telegram_user_id disponível
+ * Usa o grupo principal configurado no banco ou fallback para GROUP_ID
  */
 export async function createGenericInviteLink() {
   try {
-    const invite = await bot.telegram.createChatInviteLink(GROUP_ID, {
+    // Importar dinamicamente para evitar circular dependency
+    const { getMainGroupId } = await import('./config');
+    const mainGroupId = await getMainGroupId();
+
+    console.log(`[Telegram] Gerando convite genérico para grupo: ${mainGroupId}`);
+
+    const invite = await bot.telegram.createChatInviteLink(mainGroupId, {
       // Sem member_limit = link pode ser usado múltiplas vezes
       // Sem expire_date = link permanente
     });

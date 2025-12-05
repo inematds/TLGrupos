@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Payment, Member, Plan } from '@/types';
 import {
   CheckCircle,
@@ -78,7 +79,46 @@ export default function GerenciarPagamentosPage() {
 
   useEffect(() => {
     loadPayments();
+    loadMembers();
+    loadPlans();
+    loadFormasPagamento();
   }, [selectedStatus]);
+
+  const loadMembers = async () => {
+    try {
+      const response = await fetch('/api/members?limit=1000');
+      const data = await response.json();
+      if (response.ok) {
+        setMembers(data.members || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar membros:', error);
+    }
+  };
+
+  const loadPlans = async () => {
+    try {
+      const response = await fetch('/api/plans');
+      const data = await response.json();
+      if (response.ok) {
+        setPlans(data.plans || data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar planos:', error);
+    }
+  };
+
+  const loadFormasPagamento = async () => {
+    try {
+      const response = await fetch('/api/formas-pagamento');
+      const data = await response.json();
+      if (response.ok) {
+        setFormasPagamento(data.formas || data || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar formas de pagamento:', error);
+    }
+  };
 
   const loadPayments = async () => {
     try {
@@ -177,8 +217,8 @@ export default function GerenciarPagamentosPage() {
     }
   };
 
-  const handleCancel = async (payment: Payment) => {
-    if (!confirm(`Cancelar pagamento de ${payment.member?.nome}?`)) {
+  const handleDelete = async (payment: Payment) => {
+    if (!confirm(`⚠️ ATENÇÃO: Deseja realmente EXCLUIR permanentemente este pagamento?\n\nMembro: ${payment.member?.nome}\nValor: R$ ${payment.valor}\n\nEsta ação NÃO pode ser desfeita!`)) {
       return;
     }
 
@@ -189,18 +229,125 @@ export default function GerenciarPagamentosPage() {
       });
 
       if (response.ok) {
-        alert('Pagamento cancelado');
+        alert('✅ Pagamento excluído permanentemente do banco de dados');
         setShowModal(false);
         loadPayments();
       } else {
         const data = await response.json();
-        alert('Erro ao cancelar: ' + data.error);
+        alert('❌ Erro ao excluir: ' + data.error);
       }
     } catch (error) {
-      console.error('Erro ao cancelar pagamento:', error);
-      alert('Erro ao cancelar pagamento');
+      console.error('Erro ao excluir pagamento:', error);
+      alert('❌ Erro ao excluir pagamento');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleSubmitPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validações detalhadas
+    if (!formData.member_id) {
+      alert('❌ Erro: Selecione um membro');
+      return;
+    }
+
+    if (!formData.valor || parseFloat(formData.valor) <= 0) {
+      alert('❌ Erro: Informe um valor válido maior que zero');
+      return;
+    }
+
+    if (!formData.dias_acesso || parseInt(formData.dias_acesso) <= 0) {
+      alert('❌ Erro: Informe os dias de acesso (deve ser maior que zero)');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+
+      // Buscar dados do plano se selecionado
+      let diasAcesso = parseInt(formData.dias_acesso) || 30;
+      let valor = parseFloat(formData.valor);
+
+      if (formData.plan_id) {
+        const plan = plans.find(p => p.id === formData.plan_id);
+        if (plan) {
+          diasAcesso = plan.duracao_dias || diasAcesso;
+          valor = plan.valor || valor;
+        }
+      }
+
+      // Calcular data de vencimento
+      const dataVencimento = new Date();
+      dataVencimento.setDate(dataVencimento.getDate() + diasAcesso);
+
+      const payload = {
+        member_id: formData.member_id,
+        plan_id: formData.plan_id || null,
+        payment_method_id: formData.payment_method_id || null,
+        valor: valor,
+        dias_acesso: diasAcesso,
+        data_vencimento: dataVencimento.toISOString(),
+        descricao: formData.descricao || `Pagamento - ${diasAcesso} dias`,
+        observacoes: formData.observacoes || '',
+        comprovante_url: formData.comprovante_url || null,
+        pix_chave: formData.pix_chave || null,
+        data_pagamento: new Date().toISOString(),
+        status: 'pendente',
+      };
+
+      console.log('Enviando pagamento:', payload);
+
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('✅ Pagamento criado com sucesso!');
+        setShowFormModal(false);
+        setFormData({
+          member_id: '',
+          plan_id: '',
+          payment_method_id: '',
+          valor: '',
+          dias_acesso: '30',
+          descricao: '',
+          observacoes: '',
+          comprovante_url: '',
+          pix_chave: '',
+        });
+        loadPayments();
+      } else {
+        console.error('Erro na resposta:', data);
+        alert('❌ Erro ao criar pagamento:\n' + (data.error || 'Erro desconhecido'));
+      }
+    } catch (error: any) {
+      console.error('Erro ao criar pagamento:', error);
+      alert('❌ Erro ao criar pagamento:\n' + error.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePlanChange = (planId: string) => {
+    const plan = plans.find(p => p.id === planId);
+    if (plan) {
+      setFormData({
+        ...formData,
+        plan_id: planId,
+        valor: plan.valor?.toString() || '',
+        dias_acesso: plan.duracao_dias?.toString() || '30',
+      });
+    } else {
+      setFormData({
+        ...formData,
+        plan_id: '',
+      });
     }
   };
 
@@ -236,7 +383,7 @@ export default function GerenciarPagamentosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 ml-64 p-8">
+    <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -248,13 +395,13 @@ export default function GerenciarPagamentosPage() {
               Aprove, rejeite ou visualize todos os pagamentos do sistema
             </p>
           </div>
-          <button
-            onClick={() => alert('Funcionalidade em desenvolvimento.\n\nPor favor, execute a migração SQL primeiro:\nsql/EXECUTAR_MIGRACOES_COMPLETA.sql')}
+          <Link
+            href="/novo-pagamento"
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-sm"
           >
             <Plus className="w-5 h-5" />
             Novo Pagamento
-          </button>
+          </Link>
         </div>
 
         {/* Estatísticas */}
@@ -371,7 +518,10 @@ export default function GerenciarPagamentosPage() {
                       Dias de Acesso
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Data
+                      Data Vencimento
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Data Pagamento
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Ações
@@ -391,6 +541,11 @@ export default function GerenciarPagamentosPage() {
                             <div className="font-medium text-gray-900">
                               {payment.member?.nome}
                             </div>
+                            {payment.member?.email && (
+                              <div className="text-sm text-gray-600">
+                                {payment.member.email}
+                              </div>
+                            )}
                             {payment.member?.telegram_username && (
                               <div className="text-sm text-gray-500">
                                 @{payment.member.telegram_username}
@@ -415,6 +570,19 @@ export default function GerenciarPagamentosPage() {
                           <Calendar className="w-4 h-4 text-gray-400" />
                           {payment.dias_acesso} dias
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {(() => {
+                          // Extrair data de vencimento das observações
+                          const match = payment.observacoes?.match(/Data de Vencimento Prevista: (\d{2}\/\d{2}\/\d{4})/);
+                          if (match) {
+                            return <span className="text-blue-600 font-medium">📅 {match[1]}</span>;
+                          }
+                          // Calcular data de vencimento baseada nos dias de acesso
+                          const dataVenc = new Date();
+                          dataVenc.setDate(dataVenc.getDate() + (payment.dias_acesso || 30));
+                          return <span className="text-gray-500">~{dataVenc.toLocaleDateString('pt-BR')}</span>;
+                        })()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(payment.created_at).toLocaleDateString('pt-BR')}
@@ -467,9 +635,16 @@ export default function GerenciarPagamentosPage() {
               <div className="space-y-4 mb-6">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Membro</label>
-                  <p className="text-lg text-gray-900">{selectedPayment.member?.nome}</p>
+                  <p className="text-lg text-gray-900 font-semibold">{selectedPayment.member?.nome}</p>
+                  {selectedPayment.member?.email && (
+                    <p className="text-sm text-gray-700 flex items-center gap-1">
+                      <span className="font-medium">Email:</span> {selectedPayment.member.email}
+                    </p>
+                  )}
                   {selectedPayment.member?.telegram_username && (
-                    <p className="text-sm text-gray-500">@{selectedPayment.member.telegram_username}</p>
+                    <p className="text-sm text-gray-500 flex items-center gap-1">
+                      <span className="font-medium">Telegram:</span> @{selectedPayment.member.telegram_username}
+                    </p>
                   )}
                 </div>
 
@@ -503,8 +678,8 @@ export default function GerenciarPagamentosPage() {
 
                 {selectedPayment.observacoes && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Observações</label>
-                    <p className="text-gray-900">{selectedPayment.observacoes}</p>
+                    <label className="text-sm font-medium text-gray-500">Detalhes</label>
+                    <p className="text-gray-900 whitespace-pre-line">{selectedPayment.observacoes}</p>
                   </div>
                 )}
 
@@ -585,7 +760,7 @@ export default function GerenciarPagamentosPage() {
                     className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
                   >
                     <CheckCircle className="w-5 h-5" />
-                    Aprovar Pagamento
+                    {actionLoading ? 'Aprovando...' : 'Aprovar Pagamento'}
                   </button>
                   <button
                     onClick={() => setShowRejectModal(true)}
@@ -596,12 +771,32 @@ export default function GerenciarPagamentosPage() {
                     Rejeitar
                   </button>
                   <button
-                    onClick={() => handleCancel(selectedPayment)}
+                    onClick={() => handleDelete(selectedPayment)}
                     disabled={actionLoading}
                     className="px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
                   >
-                    <Ban className="w-5 h-5" />
-                    Cancelar
+                    <Trash2 className="w-5 h-5" />
+                    Excluir
+                  </button>
+                </div>
+              )}
+
+              {/* Botão de Excluir para outros status */}
+              {selectedPayment.status !== 'pendente' && (
+                <div className="flex gap-3 pt-6 border-t">
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                  >
+                    Fechar
+                  </button>
+                  <button
+                    onClick={() => handleDelete(selectedPayment)}
+                    disabled={actionLoading}
+                    className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Excluir
                   </button>
                 </div>
               )}
@@ -645,6 +840,198 @@ export default function GerenciarPagamentosPage() {
                 Confirmar Rejeição
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Formulário - Novo Pagamento */}
+      {showFormModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <form onSubmit={handleSubmitPayment} className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Novo Pagamento
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowFormModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Formulário */}
+              <div className="space-y-4">
+                {/* Membro */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Membro *
+                  </label>
+                  <select
+                    value={formData.member_id}
+                    onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Selecione um membro</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.nome} {member.telegram_username ? `(@${member.telegram_username})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Plano */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Plano (opcional)
+                  </label>
+                  <select
+                    value={formData.plan_id}
+                    onChange={(e) => handlePlanChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Sem plano específico</option>
+                    {plans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Valor */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Valor (R$) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.valor}
+                      onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+
+                  {/* Dias de Acesso */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dias de Acesso *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.dias_acesso}
+                      onChange={(e) => setFormData({ ...formData, dias_acesso: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="30"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Forma de Pagamento */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Forma de Pagamento (opcional)
+                  </label>
+                  <select
+                    value={formData.payment_method_id}
+                    onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Selecione a forma de pagamento</option>
+                    {formasPagamento.map((forma) => (
+                      <option key={forma.id} value={forma.id}>
+                        {forma.nome} ({forma.tipo})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Chave PIX */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chave PIX (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.pix_chave}
+                    onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="CPF, CNPJ, email, telefone ou chave aleatória"
+                  />
+                </div>
+
+                {/* URL do Comprovante */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL do Comprovante (opcional)
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.comprovante_url}
+                    onChange={(e) => setFormData({ ...formData, comprovante_url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                {/* Descrição */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Descrição (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ex: Pagamento mensal de janeiro"
+                  />
+                </div>
+
+                {/* Observações */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Observações (opcional)
+                  </label>
+                  <textarea
+                    value={formData.observacoes}
+                    onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                    placeholder="Observações adicionais..."
+                  />
+                </div>
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-3 pt-6 border-t mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowFormModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+                >
+                  <Save className="w-5 h-5" />
+                  {actionLoading ? 'Salvando...' : 'Criar Pagamento'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

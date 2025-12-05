@@ -11,7 +11,6 @@ import {
   Settings,
   BarChart3,
   Bot,
-  Bell,
   Trash2,
   UserCheck,
   DollarSign,
@@ -24,7 +23,8 @@ import {
   Layers,
   FormInput,
   Wallet,
-  Plus
+  Plus,
+  Bell
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -32,21 +32,33 @@ export default function Sidebar() {
 
   const menuItems = [
     {
-      title: 'Dashboard',
+      title: 'Início',
       icon: Home,
+      href: '/',
+      description: 'Guia e tutoriais',
+    },
+    {
+      title: 'Dashboard',
+      icon: BarChart3,
       href: '/dashboard',
-      description: 'Visão geral',
+      description: 'Estatísticas e métricas',
+    },
+    {
+      title: 'Notificações',
+      icon: Bell,
+      href: '/notificacoes',
+      description: 'Monitor de notificações',
     },
     {
       title: 'Membros',
       icon: Users,
-      href: '/dashboard/members',
+      href: '/members',
       description: 'Gerenciar membros',
     },
     {
       title: 'Novo Membro',
       icon: UserPlus,
-      href: '/dashboard/new',
+      href: '/novo-membro',
       description: 'Cadastrar manualmente',
     },
     {
@@ -56,100 +68,38 @@ export default function Sidebar() {
       description: 'Formulário de cadastro',
     },
     {
-      title: 'Grupos Telegram',
-      icon: Layers,
-      href: '/dashboard/grupos',
-      description: 'Gerenciar grupos',
-    },
-    {
-      title: 'Inclusão no Grupo',
-      icon: UserCog,
-      href: '/dashboard/inclusao',
-      description: 'Incluir membros no grupo',
-    },
-    {
-      title: 'Convites',
-      icon: LinkIcon,
-      href: '/dashboard/convites',
-      description: 'Histórico de convites',
-    },
-    {
       title: 'Planos de Acesso',
       icon: Tag,
-      href: '/dashboard/planos',
+      href: '/planos',
       description: 'Gerenciar planos',
     },
     {
-      title: 'Formas de Pagamento',
-      icon: CreditCard,
-      href: '/dashboard/formas-pagamento',
-      description: 'Configurar pagamentos',
-    },
-    {
-      title: 'Validar Pagamentos',
-      icon: CheckCircle,
-      href: '/dashboard/validar-pagamentos',
-      description: 'Aprovar comprovantes PIX',
-    },
-    {
-      title: 'Gerenciar Pagamentos',
-      icon: Wallet,
-      href: '/dashboard/pagamentos-gerenciar',
-      description: 'CRUD completo de pagamentos',
-    },
-    {
-      title: 'Histórico de Cadastros',
-      icon: FileText,
-      href: '/dashboard/cadastros',
-      description: 'Ver todos os cadastros',
-    },
-    {
-      title: 'Estatísticas de Pagamento',
-      icon: DollarSign,
-      href: '/dashboard/pagamentos-estatisticas',
-      description: 'Relatórios financeiros',
-    },
-    {
-      title: 'Sincronização',
-      icon: RefreshCw,
-      href: '/dashboard/sync',
-      description: 'Sincronizar com Telegram',
-    },
-    {
-      title: 'Bot Auto-Registro',
+      title: 'Bot',
       icon: Bot,
-      href: '/dashboard/bot',
+      href: '/bot',
       description: 'Sistema de auto-cadastro',
-    },
-    {
-      title: 'Exclusão Manual',
-      icon: UserMinus,
-      href: '/dashboard/exclusao',
-      description: 'Remover membros específicos',
-    },
-    {
-      title: 'Auto-Exclusão',
-      icon: Trash2,
-      href: '/dashboard/auto-removal',
-      description: 'Remover vencidos',
-    },
-    {
-      title: 'Estatísticas',
-      icon: BarChart3,
-      href: '/dashboard/stats',
-      description: 'Relatórios e gráficos',
-    },
-    {
-      title: 'Notificações',
-      icon: Bell,
-      href: '/dashboard/notifications',
-      description: 'Configurar alertas',
     },
     {
       title: 'Configurações',
       icon: Settings,
-      href: '/dashboard/settings',
+      href: '/configuracoes',
       description: 'Ajustes do sistema',
+    },
+    // Seção de Grupos (consolidada)
+    {
+      title: 'Grupos',
+      icon: Layers,
+      href: '/grupos',
+      description: 'Gerenciar grupos e convites',
+      section: 'bottom',
+    },
+    // Seção de Pagamentos (consolidada)
+    {
+      title: 'Pagamentos',
+      icon: Wallet,
+      href: '/pagamentos-new',
+      description: 'Gerenciar pagamentos',
+      section: 'bottom',
     },
   ];
 
@@ -164,7 +114,7 @@ export default function Sidebar() {
       {/* Menu */}
       <nav className="p-4">
         <ul className="space-y-1">
-          {menuItems.map((item) => {
+          {menuItems.filter((item) => !item.section).map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 
@@ -190,13 +140,46 @@ export default function Sidebar() {
               </li>
             );
           })}
+
+          {/* Separator */}
+          <li className="py-3">
+            <div className="border-t border-gray-200"></div>
+          </li>
+
+          {/* Bottom Section */}
+          {menuItems.filter((item) => item.section === 'bottom').map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className={`
+                    flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                    ${
+                      isActive
+                        ? 'bg-green-50 text-green-700 font-medium'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }
+                  `}
+                >
+                  <Icon className="w-5 h-5" />
+                  <div className="flex-1">
+                    <div className="text-sm">{item.title}</div>
+                    <div className="text-xs text-gray-500">{item.description}</div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
         <div className="text-xs text-gray-500 text-center">
-          <p className="font-medium">TLGrupos v1.0</p>
+          <p className="font-medium">TLGrupos v1.1.0</p>
           <p className="mt-1">Sistema de Gestão</p>
         </div>
       </div>

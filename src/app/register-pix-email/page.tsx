@@ -135,31 +135,76 @@ export default function RegisterPixEmailPage() {
     setLoading(true);
 
     try {
-      // Criar cadastro pendente
-      const res = await fetch('/api/cadastro-pendente', {
+      // 1. Verificar se membro já existe pelo email
+      let memberId = '';
+      const checkMemberRes = await fetch(`/api/members?email=${encodeURIComponent(formData.email)}`);
+      const checkMemberData = await checkMemberRes.json();
+
+      if (checkMemberData.members && checkMemberData.members.length > 0) {
+        // Membro já existe
+        memberId = checkMemberData.members[0].id;
+        console.log('Membro existente encontrado:', memberId);
+      } else {
+        // 2. Criar novo membro
+        const createMemberRes = await fetch('/api/members', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nome: formData.nome,
+            email: formData.email,
+            telefone: formData.telefone,
+            telegram_username: formData.telegram_username,
+            // Calcular data de vencimento inicial
+            data_vencimento: new Date(Date.now() + selectedPlan.duracao_dias * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'ativo',
+            plan_id: formData.plan_id,
+          }),
+        });
+
+        const createMemberData = await createMemberRes.json();
+
+        if (!createMemberData.success) {
+          throw new Error(createMemberData.error || 'Erro ao criar membro');
+        }
+
+        memberId = createMemberData.member.id;
+        console.log('Novo membro criado:', memberId);
+      }
+
+      // 3. Criar pagamento com status pendente
+      const createPaymentRes = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nome: formData.nome,
-          email: formData.email,
-          telefone: formData.telefone,
-          telegram_username: formData.telegram_username,
+          member_id: memberId,
           plan_id: formData.plan_id,
-          valor_pago: selectedPlan.valor,
-          metodo_pagamento: 'pix',
-          qr_code_pix: qrCodeUrl,
+          valor: selectedPlan.valor,
+          dias_acesso: selectedPlan.duracao_dias,
+          data_vencimento: new Date(Date.now() + selectedPlan.duracao_dias * 24 * 60 * 60 * 1000).toISOString(),
+          descricao: `Pagamento via PIX - ${selectedPlan.nome}`,
+          observacoes: `QR Code gerado. Aguardando comprovante por email.`,
+          status: 'pendente',
+          data_pagamento: new Date().toISOString(),
         }),
       });
 
-      const data = await res.json();
+      const createPaymentData = await createPaymentRes.json();
 
-      if (data.success) {
-        setCadastroId(data.data.id);
-        setStep('aguardando');
-      } else {
-        alert(`Erro: ${data.error}`);
+      if (!createPaymentData.success && !createPaymentData.payment) {
+        throw new Error(createPaymentData.error || 'Erro ao criar pagamento');
       }
+
+      const paymentId = createPaymentData.payment?.id || createPaymentData.data?.id;
+
+      if (!paymentId) {
+        throw new Error('ID do pagamento não retornado');
+      }
+
+      setCadastroId(paymentId); // Usar payment_id como referência
+      setStep('aguardando');
+
     } catch (error: any) {
+      console.error('Erro ao processar:', error);
       alert(`Erro: ${error.message}`);
     } finally {
       setLoading(false);
@@ -412,12 +457,24 @@ export default function RegisterPixEmailPage() {
               </div>
 
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Cadastro Criado!
+                Pagamento Registrado!
               </h2>
 
               <p className="text-gray-600 mb-8">
-                Agora envie o comprovante de pagamento por email.
+                Seu pagamento foi registrado. Agora envie o comprovante por email para aprovação.
               </p>
+
+              <div className="bg-green-50 border-2 border-green-300 rounded-lg p-6 mb-6">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                  <h3 className="font-bold text-green-900">Cadastro Completo</h3>
+                </div>
+                <p className="text-sm text-green-800 text-center">
+                  ✓ Seus dados foram salvos<br/>
+                  ✓ Pagamento criado e aguardando aprovação<br/>
+                  ✓ Código de referência: <strong className="font-mono text-lg">{cadastroId.slice(0, 8).toUpperCase()}</strong>
+                </p>
+              </div>
 
               <div className="bg-purple-50 border-2 border-purple-300 rounded-lg p-6 mb-6">
                 <h3 className="font-bold text-purple-900 mb-3 flex items-center justify-center gap-2">
@@ -427,9 +484,10 @@ export default function RegisterPixEmailPage() {
                 <ol className="text-left text-sm text-purple-800 space-y-2">
                   <li>1. Salve o comprovante de pagamento PIX</li>
                   <li>2. Envie por email para: <strong className="font-mono">{emailComprovantes}</strong></li>
-                  <li>3. No assunto, coloque: <strong className="font-mono">{cadastroId.slice(0, 8).toUpperCase()}</strong></li>
-                  <li>4. Envie do email: <strong>{formData.email}</strong></li>
-                  <li>5. Nossa equipe irá validar em até 24 horas</li>
+                  <li>3. No assunto, coloque seu código: <strong className="font-mono">{cadastroId.slice(0, 8).toUpperCase()}</strong></li>
+                  <li>4. Envie do email cadastrado: <strong>{formData.email}</strong></li>
+                  <li>5. Nossa equipe validará em até 24 horas</li>
+                  <li>6. Após aprovação, você receberá o link de acesso por email automaticamente</li>
                 </ol>
               </div>
 

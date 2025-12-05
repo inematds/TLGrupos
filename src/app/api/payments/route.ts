@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createInviteLink, createGenericInviteLink } from '@/lib/telegram';
+import { sendPaymentApprovedNotification, sendPaymentRejectedNotification } from '@/services/notification-service';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,7 +21,7 @@ export async function GET(request: NextRequest) {
       .from('payments')
       .select(`
         *,
-        member:members(id, nome, telegram_username, telegram_user_id, status),
+        member:members(id, nome, email, telegram_username, telegram_user_id, status),
         plan:plans(id, nome, valor, duracao_dias)
       `, { count: 'exact' })
       .order('created_at', { ascending: false })
@@ -62,6 +64,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('[API Payments POST] Dados recebidos:', JSON.stringify(body, null, 2));
+
     const {
       member_id,
       plan_id,
@@ -76,18 +80,39 @@ export async function POST(request: NextRequest) {
       dias_acesso = 30,
     } = body;
 
-    // Validações
+    // Validações detalhadas
     if (!member_id) {
       return NextResponse.json(
-        { error: 'member_id é obrigatório' },
+        { error: 'Campo obrigatório: Membro não foi selecionado' },
         { status: 400 }
       );
     }
 
-    if (!valor || valor <= 0) {
+    if (!valor || isNaN(valor) || valor <= 0) {
       return NextResponse.json(
-        { error: 'valor deve ser maior que zero' },
+        { error: 'Campo obrigatório: Valor deve ser um número maior que zero' },
         { status: 400 }
+      );
+    }
+
+    if (!dias_acesso || isNaN(dias_acesso) || dias_acesso <= 0) {
+      return NextResponse.json(
+        { error: 'Campo obrigatório: Dias de acesso deve ser um número maior que zero' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se o membro existe e buscar email e data_vencimento
+    const { data: memberExists, error: memberError } = await supabase
+      .from('members')
+      .select('id, nome, email, data_vencimento')
+      .eq('id', member_id)
+      .single();
+
+    if (memberError || !memberExists) {
+      return NextResponse.json(
+        { error: 'Membro não encontrado. Verifique se o ID do membro é válido.' },
+        { status: 404 }
       );
     }
 
@@ -96,6 +121,8 @@ export async function POST(request: NextRequest) {
       .from('payments')
       .insert({
         member_id,
+        email: memberExists.email,
+        data_vencimento: memberExists.data_vencimento,
         plan_id,
         payment_method_id,
         valor,
@@ -110,18 +137,20 @@ export async function POST(request: NextRequest) {
       })
       .select(`
         *,
-        member:members(id, nome, telegram_username),
+        member:members(id, nome, email, telegram_username),
         plan:plans(id, nome, valor, duracao_dias)
       `)
       .single();
 
     if (error) {
-      console.error('[API Payments] Erro ao criar:', error);
+      console.error('[API Payments] Erro ao criar pagamento:', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message || 'Erro ao criar pagamento no banco de dados' },
         { status: 500 }
       );
     }
+
+    console.log('[API Payments POST] Pagamento criado com sucesso:', data.id);
 
     // Registrar log
     await supabase.from('logs').insert({
@@ -136,7 +165,7 @@ export async function POST(request: NextRequest) {
       executado_por: 'Sistema',
     });
 
-    return NextResponse.json(data, { status: 201 });
+    return NextResponse.json({ success: true, payment: data }, { status: 201 });
   } catch (error: any) {
     console.error('[API Payments] Erro:', error);
     return NextResponse.json(
@@ -196,21 +225,95 @@ export async function PATCH(request: NextRequest) {
         );
       }
 
-      // Buscar pagamento atualizado
+      // Buscar pagamento atualizado com dados do membro
       const { data: payment } = await supabase
         .from('payments')
         .select(`
           *,
-          member:members(id, nome, telegram_username, data_vencimento),
+          member:members(id, nome, email, telegram_user_id, telegram_username, data_vencimento),
           plan:plans(id, nome, valor, duracao_dias)
         `)
         .eq('id', payment_id)
         .single();
 
+      if (!payment) {
+        return NextResponse.json(
+          { error: 'Pagamento não encontrado após aprovação' },
+          { status: 404 }
+        );
+      }
+
+      console.log('[API Payments] Pagamento aprovado, gerando link de acesso...');
+
+      // Gerar link de convite do Telegram
+      let inviteLink = '';
+      const member = payment.member as any;
+
+      if (member.telegram_user_id) {
+        // Link único para usuário específico
+        const linkResult = await createInviteLink(parseInt(member.telegram_user_id));
+        if (linkResult.success) {
+          inviteLink = linkResult.link || '';
+          console.log('[API Payments] Link único gerado:', inviteLink);
+        } else {
+          console.error('[API Payments] Erro ao gerar link único:', linkResult.error);
+          // Fallback para link genérico
+          const genericResult = await createGenericInviteLink();
+          if (genericResult.success) {
+            inviteLink = genericResult.link || '';
+            console.log('[API Payments] Link genérico gerado (fallback):', inviteLink);
+          }
+        }
+      } else {
+        // Link genérico se não houver telegram_user_id
+        const genericResult = await createGenericInviteLink();
+        if (genericResult.success) {
+          inviteLink = genericResult.link || '';
+          console.log('[API Payments] Link genérico gerado:', inviteLink);
+        } else {
+          console.error('[API Payments] Erro ao gerar link genérico:', genericResult.error);
+        }
+      }
+
+      // Salvar link no pagamento
+      if (inviteLink) {
+        await supabase
+          .from('payments')
+          .update({ invite_link: inviteLink })
+          .eq('id', payment_id);
+
+        console.log('[API Payments] Link salvo no pagamento');
+      }
+
+      // Enviar notificações (Email + Telegram)
+      if (inviteLink && member.id) {
+        console.log('[API Payments] Enviando notificações...');
+
+        try {
+          const plan = payment.plan as any;
+          const planoDias = plan?.duracao_dias || payment.dias_acesso || 30;
+
+          const notificationResult = await sendPaymentApprovedNotification(
+            member.id,
+            inviteLink,
+            planoDias
+          );
+
+          console.log('[API Payments] Resultado das notificações:', {
+            email: notificationResult.email ? 'Enviado' : 'Não enviado',
+            telegram: notificationResult.telegram ? 'Enviado' : 'Não enviado',
+          });
+        } catch (error) {
+          console.error('[API Payments] Erro ao enviar notificações:', error);
+          // Não bloqueia a aprovação se as notificações falharem
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: result.message,
         new_expiry_date: result.new_expiry_date,
+        invite_link: inviteLink,
         payment,
       });
     }
@@ -258,11 +361,31 @@ export async function PATCH(request: NextRequest) {
         .from('payments')
         .select(`
           *,
-          member:members(id, nome, telegram_username),
+          member:members(id, nome, email, telegram_user_id, telegram_username),
           plan:plans(id, nome, valor, duracao_dias)
         `)
         .eq('id', payment_id)
         .single();
+
+      // Enviar notificações de rejeição
+      if (payment && (payment.member as any)?.id) {
+        console.log('[API Payments] Enviando notificações de rejeição...');
+
+        try {
+          const notificationResult = await sendPaymentRejectedNotification(
+            (payment.member as any).id,
+            motivo_rejeicao
+          );
+
+          console.log('[API Payments] Resultado das notificações de rejeição:', {
+            email: notificationResult.email ? 'Enviado' : 'Não enviado',
+            telegram: notificationResult.telegram ? 'Enviado' : 'Não enviado',
+          });
+        } catch (error) {
+          console.error('[API Payments] Erro ao enviar notificações de rejeição:', error);
+          // Não bloqueia a rejeição se as notificações falharem
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -278,7 +401,7 @@ export async function PATCH(request: NextRequest) {
       .eq('id', payment_id)
       .select(`
         *,
-        member:members(id, nome, telegram_username),
+        member:members(id, nome, email, telegram_username),
         plan:plans(id, nome, valor, duracao_dias)
       `)
       .single();
@@ -301,7 +424,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE - Cancelar pagamento
+// DELETE - Excluir pagamento permanentemente
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -314,10 +437,10 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Buscar pagamento antes de cancelar
+    // Buscar pagamento antes de deletar
     const { data: payment } = await supabase
       .from('payments')
-      .select('*, member:members(id, nome)')
+      .select('*, member:members(id, nome, email)')
       .eq('id', paymentId)
       .single();
 
@@ -328,32 +451,36 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Atualizar status para cancelado
+    // Registrar log ANTES de deletar
+    await supabase.from('logs').insert({
+      member_id: payment.member_id,
+      acao: 'exclusao',
+      detalhes: {
+        tipo: 'exclusao_permanente_pagamento',
+        payment_id: paymentId,
+        valor: payment.valor,
+        dias_acesso: payment.dias_acesso,
+        status_anterior: payment.status,
+      },
+      executado_por: 'Admin',
+    });
+
+    // DELETAR permanentemente do banco de dados
     const { error } = await supabase
       .from('payments')
-      .update({ status: 'cancelado' })
+      .delete()
       .eq('id', paymentId);
 
     if (error) {
-      console.error('[API Payments] Erro ao cancelar:', error);
+      console.error('[API Payments] Erro ao deletar:', error);
       return NextResponse.json(
         { error: error.message },
         { status: 500 }
       );
     }
 
-    // Registrar log
-    await supabase.from('logs').insert({
-      member_id: payment.member_id,
-      acao: 'edicao',
-      detalhes: {
-        tipo: 'cancelamento_pagamento',
-        payment_id: paymentId,
-      },
-      executado_por: 'Sistema',
-    });
-
-    return NextResponse.json({ success: true });
+    console.log(`[API Payments] Pagamento ${paymentId} excluído permanentemente`);
+    return NextResponse.json({ success: true, message: 'Pagamento excluído permanentemente' });
   } catch (error: any) {
     console.error('[API Payments] Erro:', error);
     return NextResponse.json(

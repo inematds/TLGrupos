@@ -3,6 +3,7 @@ import {
   getMemberById,
   updateMember,
   removeMember,
+  deleteMember,
   renewMember,
 } from '@/services/member-service';
 import { UpdateMemberInput } from '@/types';
@@ -86,25 +87,25 @@ export async function PUT(
   }
 }
 
-// DELETE /api/members/[id] - Remove um membro
+// DELETE /api/members/[id] - Exclui permanentemente um membro do banco
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const member = await removeMember(params.id);
+    const result = await deleteMember(params.id);
 
     return NextResponse.json({
       success: true,
-      data: member,
-      message: 'Membro removido com sucesso',
+      data: result,
+      message: 'Membro excluído permanentemente com sucesso',
     });
   } catch (error: any) {
-    console.error('Erro ao remover membro:', error);
+    console.error('Erro ao excluir membro:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Erro ao remover membro',
+        error: error.message || 'Erro ao excluir membro',
       },
       { status: 500 }
     );

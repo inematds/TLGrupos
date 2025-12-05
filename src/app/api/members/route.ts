@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const status = searchParams.get('status') || undefined;
     const search = searchParams.get('search') || undefined;
+    const email = searchParams.get('email') || undefined;
     const limit = searchParams.get('limit')
       ? parseInt(searchParams.get('limit')!)
       : undefined;
@@ -30,10 +31,11 @@ export async function GET(request: NextRequest) {
       ? parseInt(searchParams.get('offset')!)
       : undefined;
 
-    const result = await getMembers({ status, search, limit, offset });
+    const result = await getMembers({ status, search, email, limit, offset });
 
     return NextResponse.json({
       success: true,
+      members: result.data,
       data: result.data,
       total: result.total,
     });

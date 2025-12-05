@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * PUT /api/config - Atualiza uma configuração
+ * PUT /api/config - Atualiza ou cria uma configuração (UPSERT)
  * Body: { chave: string, valor: string }
  */
 export async function PUT(request: NextRequest) {
@@ -71,10 +71,20 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Usar UPSERT para criar se não existir ou atualizar se existir
     const { data, error } = await supabase
       .from('system_config')
-      .update({ valor, updated_at: new Date().toISOString() })
-      .eq('chave', chave)
+      .upsert(
+        {
+          chave,
+          valor,
+          updated_at: new Date().toISOString(),
+          tipo: 'text' // tipo padrão para novas configurações
+        },
+        {
+          onConflict: 'chave' // usa a chave como identificador único
+        }
+      )
       .select()
       .single();
 
@@ -85,14 +95,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data,
-      message: 'Configuração atualizada com sucesso',
+      message: 'Configuração salva com sucesso',
     });
   } catch (error: any) {
-    console.error('Erro ao atualizar configuração:', error);
+    console.error('Erro ao salvar configuração:', error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Erro ao atualizar configuração',
+        error: error.message || 'Erro ao salvar configuração',
       },
       { status: 500 }
     );

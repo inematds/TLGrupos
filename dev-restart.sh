@@ -1,16 +1,17 @@
 #!/bin/bash
 
-# Script para reiniciar todo o sistema TLGrupos
-# Uso: ./restart-all.sh
+# Script para reiniciar todo o sistema TLGrupos (DESENVOLVIMENTO)
+# Uso: ./dev-restart.sh
+# Produção: use pm2 restart all
 
-echo "🔄 Reiniciando TLGrupos"
+echo "🔄 Reiniciando TLGrupos (DEV)"
 echo "═══════════════════════════════════════════════════"
 echo ""
 
 # Parar tudo
-./stop-all.sh
+./dev-stop.sh
 
 sleep 2
 
 # Iniciar tudo
-./start-all.sh
+./dev-start.sh

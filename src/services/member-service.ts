@@ -10,6 +10,7 @@ const supabase = getServiceSupabase();
 export async function getMembers(filters?: {
   status?: string;
   search?: string;
+  email?: string;
   limit?: number;
   offset?: number;
 }) {
@@ -38,9 +39,12 @@ export async function getMembers(filters?: {
     query = query.eq('status', filters.status);
   }
 
-  if (filters?.search) {
+  // Busca por email específico (prioridade sobre search)
+  if (filters?.email) {
+    query = query.eq('email', filters.email);
+  } else if (filters?.search) {
     query = query.or(
-      `nome.ilike.%${filters.search}%,telegram_username.ilike.%${filters.search}%`
+      `nome.ilike.%${filters.search}%,telegram_username.ilike.%${filters.search}%,email.ilike.%${filters.search}%`
     );
   }
 
@@ -253,7 +257,8 @@ export async function renewMember(id: string, newExpiryDate: string) {
 }
 
 /**
- * Remove um membro (marca como removido e remove do grupo)
+ * Marca membro como removido (remove do grupo mas mantém no banco)
+ * Usado quando: sistema remove do grupo, não está em grupo, ou erro de remoção
  */
 export async function removeMember(id: string) {
   const member = await getMemberById(id);
@@ -270,7 +275,7 @@ export async function removeMember(id: string) {
     }
   }
 
-  // Marcar como removido no banco
+  // Marcar como removido no banco (mas NÃO deleta)
   const { data, error } = await supabase
     .from('members')
     .update({ status: 'removido' })
@@ -283,6 +288,51 @@ export async function removeMember(id: string) {
   }
 
   return data as Member;
+}
+
+/**
+ * Exclui permanentemente um membro do banco de dados
+ * ATENÇÃO: Esta ação é irreversível
+ * Remove automaticamente todos os logs e pagamentos associados (CASCADE)
+ */
+export async function deleteMember(id: string) {
+  const member = await getMemberById(id);
+
+  if (!member) {
+    throw new Error('Membro não encontrado');
+  }
+
+  console.log(`[deleteMember] Deletando membro ${member.nome} (${id}) e todos os registros relacionados (CASCADE)`);
+
+  // DELETAR PERMANENTEMENTE O MEMBRO DO BANCO
+  // A foreign key com ON DELETE CASCADE vai automaticamente deletar:
+  // - Todos os logs relacionados
+  // - Todos os pagamentos relacionados
+  const { error } = await supabase
+    .from('members')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('[deleteMember] Erro ao deletar membro:', error);
+    console.error('[deleteMember] Detalhes do erro:', JSON.stringify(error, null, 2));
+
+    // Se o erro ainda for de foreign key constraint, avisar o usuário
+    if (error.code === '23503') {
+      throw new Error(
+        'Erro: Para deletar membros, execute primeiro o script SQL em scripts/fix-member-deletion.sql no Supabase SQL Editor. ' +
+        'Esse script configura as foreign keys para deletar em cascata.'
+      );
+    }
+
+    throw new Error(`Erro ao excluir membro: ${error.message}`);
+  }
+
+  console.log(`[deleteMember] Membro ${id} e todos os registros relacionados foram excluídos permanentemente`);
+  return {
+    success: true,
+    message: 'Membro e todos os registros relacionados (logs, pagamentos) foram excluídos permanentemente'
+  };
 }
 
 /**
