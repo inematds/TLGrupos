@@ -297,13 +297,25 @@ export async function PATCH(request: NextRequest) {
           const notificationResult = await sendPaymentApprovedNotification(
             member.id,
             inviteLink,
-            planoDias
+            planoDias,
+            payment_id
           );
 
           console.log('[API Payments] Resultado das notificações:', {
             email: notificationResult.email ? 'Enviado' : 'Não enviado',
             telegram: notificationResult.telegram ? 'Enviado' : 'Não enviado',
           });
+
+          // Atualizar campos de notificação no pagamento
+          await supabase
+            .from('payments')
+            .update({
+              email_sent: notificationResult.email,
+              notification_sent: notificationResult.email || notificationResult.telegram,
+            })
+            .eq('id', payment_id);
+
+          console.log('[API Payments] Status de notificação atualizado no pagamento');
         } catch (error) {
           console.error('[API Payments] Erro ao enviar notificações:', error);
           // Não bloqueia a aprovação se as notificações falharem
