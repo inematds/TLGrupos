@@ -86,9 +86,9 @@ export default function HomePage() {
                 Gestão de Pagamentos
               </h3>
               <p className="text-gray-600 mb-4">
-                Validação de PIX, aprovação automática, controle de vencimentos e relatórios financeiros.
+                Gerenciamento completo: Validar, Planos e Histórico em abas organizadas.
               </p>
-              <Link href="/pagamentos" className="text-green-600 hover:underline flex items-center gap-1">
+              <Link href="/pagamentos-new" className="text-green-600 hover:underline flex items-center gap-1">
                 Gerenciar <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -100,10 +100,10 @@ export default function HomePage() {
                 Controle de Membros
               </h3>
               <p className="text-gray-600 mb-4">
-                Cadastro, inclusão em grupos, histórico completo e status em tempo real.
+                Cadastro em 3 abas: Todos Membros, Novo Membro e Cadastro Público.
               </p>
-              <Link href="/members" className="text-purple-600 hover:underline flex items-center gap-1">
-                Ver Membros <ArrowRight className="w-4 h-4" />
+              <Link href="/membros" className="text-purple-600 hover:underline flex items-center gap-1">
+                Gerenciar Membros <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -311,9 +311,9 @@ npm install
                 Cadastre membros manualmente ou deixe que se auto-cadastrem via Telegram:
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-2 mb-4">
-                <li><strong>Manual:</strong> Menu <Link href="/novo-membro" className="text-blue-600 hover:underline">Novo Membro</Link></li>
+                <li><strong>Manual:</strong> Menu <Link href="/membros" className="text-blue-600 hover:underline">Membros → Novo Membro</Link></li>
                 <li><strong>Automático:</strong> Membros usam <code className="bg-gray-100 px-2 py-1 rounded">/registrar</code> no bot</li>
-                <li><strong>Formulário:</strong> Compartilhe o <Link href="/cadastro" className="text-blue-600 hover:underline">link público</Link></li>
+                <li><strong>Formulário:</strong> Compartilhe o <Link href="/cadastro" className="text-blue-600 hover:underline">link público</Link> (disponível em Membros → Cadastro Público)</li>
               </ul>
               <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
                 <p className="text-sm text-blue-800">
@@ -334,9 +334,9 @@ npm install
                 Crie planos de acesso e configure formas de pagamento:
               </p>
               <ul className="list-disc list-inside text-gray-600 space-y-2 mb-4">
-                <li><Link href="/planos" className="text-green-600 hover:underline">Planos de Acesso</Link> - Configure valores e duração (30, 60, 90 dias)</li>
-                <li><Link href="/formas-pagamento" className="text-green-600 hover:underline">Formas de Pagamento</Link> - PIX, cartão, boleto, etc.</li>
+                <li><Link href="/pagamentos-new" className="text-green-600 hover:underline">Pagamentos → Planos</Link> - Configure valores e duração (30, 60, 90 dias)</li>
                 <li><Link href="/configuracoes" className="text-green-600 hover:underline">Chave PIX Global</Link> - Configure em Configurações → Pagamento</li>
+                <li>Formas de pagamento integradas no sistema de validação</li>
               </ul>
             </div>
 
@@ -352,7 +352,7 @@ npm install
                 Quando um membro efetuar o pagamento:
               </p>
               <ol className="list-decimal list-inside text-gray-600 space-y-2 mb-4">
-                <li>Vá em <Link href="/validar-pagamentos" className="text-purple-600 hover:underline">Validar Pagamentos</Link></li>
+                <li>Vá em <Link href="/pagamentos-new" className="text-purple-600 hover:underline">Pagamentos → Validar</Link></li>
                 <li>Visualize o comprovante PIX enviado</li>
                 <li>Clique em <strong className="text-green-600">✅ Aprovar</strong></li>
                 <li><strong className="text-blue-600">Automático:</strong> Sistema gera link e envia por Email + Telegram!</li>
@@ -412,13 +412,13 @@ npm install
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { title: 'Dashboard', icon: BarChart3, href: '/dashboard', color: 'blue', desc: 'Estatísticas em tempo real' },
-              { title: 'Membros', icon: Users, href: '/members', color: 'purple', desc: 'Gerenciar cadastros' },
-              { title: 'Pagamentos', icon: DollarSign, href: '/pagamentos', color: 'green', desc: 'CRUD completo' },
-              { title: 'Validar Pagamentos', icon: CheckCircle, href: '/validar-pagamentos', color: 'emerald', desc: 'Aprovar comprovantes' },
-              { title: 'Planos', icon: FileText, href: '/planos', color: 'indigo', desc: 'Criar planos de acesso' },
-              { title: 'Grupos Telegram', icon: MessageSquare, href: '/grupos', color: 'cyan', desc: 'Gerenciar grupos' },
-              { title: 'Inclusão', icon: LinkIcon, href: '/inclusao', color: 'teal', desc: 'Enviar convites' },
+              { title: 'Notificações', icon: Bell, href: '/notificacoes', color: 'yellow', desc: 'Monitor de alertas' },
+              { title: 'Membros', icon: Users, href: '/membros', color: 'purple', desc: '3 abas organizadas' },
+              { title: 'Pagamentos', icon: DollarSign, href: '/pagamentos-new', color: 'green', desc: 'Validar, Planos e Histórico' },
+              { title: 'Grupos', icon: MessageSquare, href: '/grupos', color: 'cyan', desc: 'Grupos e convites' },
+              { title: 'Bot', icon: Bot, href: '/bot', color: 'indigo', desc: 'Auto-cadastro Telegram' },
               { title: 'Configurações', icon: Settings, href: '/configuracoes', color: 'gray', desc: 'Sistema e notificações' },
+              { title: 'Status', icon: Clock, href: '/status', color: 'orange', desc: 'Diagnóstico do sistema' },
             ].map((item) => {
               const Icon = item.icon;
               return (
