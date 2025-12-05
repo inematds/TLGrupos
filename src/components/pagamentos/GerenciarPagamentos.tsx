@@ -156,7 +156,7 @@ export default function GerenciarPagamentos() {
         body: JSON.stringify({
           payment_id: payment.id,
           action: 'approve',
-          approved_by: 'Admin',
+          aprovado_por: 'Admin',
         }),
       });
 
@@ -193,7 +193,7 @@ export default function GerenciarPagamentos() {
         body: JSON.stringify({
           payment_id: selectedPayment.id,
           action: 'reject',
-          rejected_by: 'Admin',
+          rejeitado_por: 'Admin',
           motivo_rejeicao: rejectReason,
         }),
       });
@@ -995,14 +995,14 @@ export default function GerenciarPagamentos() {
                   </div>
 
                   {/* Informações de Aprovação/Rejeição */}
-                  {selectedPayment.status === 'aprovado' && selectedPayment.approved_by && (
+                  {selectedPayment.status === 'aprovado' && selectedPayment.aprovado_por && (
                     <div className="bg-green-50 p-4 rounded-lg">
                       <p className="text-sm text-green-800">
-                        <span className="font-medium">Aprovado por:</span> {selectedPayment.approved_by}
+                        <span className="font-medium">Aprovado por:</span> {selectedPayment.aprovado_por}
                       </p>
-                      {selectedPayment.approved_at && (
+                      {selectedPayment.data_aprovacao && (
                         <p className="text-sm text-green-800 mt-1">
-                          <span className="font-medium">Data:</span> {new Date(selectedPayment.approved_at).toLocaleString('pt-BR')}
+                          <span className="font-medium">Data:</span> {new Date(selectedPayment.data_aprovacao).toLocaleString('pt-BR')}
                         </p>
                       )}
                     </div>
@@ -1010,9 +1010,9 @@ export default function GerenciarPagamentos() {
 
                   {selectedPayment.status === 'rejeitado' && (
                     <div className="bg-red-50 p-4 rounded-lg">
-                      {selectedPayment.rejected_by && (
+                      {selectedPayment.rejeitado_por && (
                         <p className="text-sm text-red-800">
-                          <span className="font-medium">Rejeitado por:</span> {selectedPayment.rejected_by}
+                          <span className="font-medium">Rejeitado por:</span> {selectedPayment.rejeitado_por}
                         </p>
                       )}
                       {selectedPayment.motivo_rejeicao && (
