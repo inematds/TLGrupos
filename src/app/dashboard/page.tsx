@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Member, Stats } from '@/types';
 import { DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle, Link as LinkIcon } from 'lucide-react';
+import CronActivityChart from '@/components/CronActivityChart';
 
 interface PaymentStats {
   total: number;
@@ -339,6 +340,11 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+
+            {/* Gráfico de Atividade dos CRON Jobs */}
+            <div className="mb-8">
+              <CronActivityChart />
+            </div>
 
             {/* Linha 4: Status Especiais e Alertas */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
