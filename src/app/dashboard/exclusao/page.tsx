@@ -147,7 +147,7 @@ export default function ExclusaoPage() {
         </div>
       </header>
 
-      <main className="px-8 py-8 max-w-7xl mx-auto">
+      <main className="px-8 py-8">
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">

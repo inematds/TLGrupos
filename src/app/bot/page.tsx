@@ -75,7 +75,7 @@ export default function BotPage() {
         </div>
       </header>
 
-      <main className="px-8 py-8 max-w-6xl mx-auto">
+      <main className="px-8 py-8">
         {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-green-50 border border-green-200 rounded-lg p-6">

@@ -91,7 +91,7 @@ export default function GruposPage() {
       </div>
 
       {/* Tab Content */}
-      <main className="px-8 py-8 max-w-7xl mx-auto">
+      <main className="px-8 py-8">
         {activeTab === 'gerenciar' && <GerenciarGrupos />}
         {activeTab === 'inclusao' && <InclusaoGrupos />}
         {activeTab === 'convites' && <ConvitesGrupos />}
