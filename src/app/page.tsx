@@ -493,6 +493,165 @@ npm install
           </div>
         </section>
 
+        {/* Processos Automáticos */}
+        <section className="mb-16">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            ⚙️ Processos Automáticos (Cron Jobs)
+          </h2>
+          <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl shadow-lg p-8 border-2 border-cyan-500">
+            <p className="text-gray-700 mb-6">
+              O sistema executa processos periódicos automaticamente. Configure-os usando serviços como <strong>cron-job.org</strong> ou <strong>EasyCron</strong> (gratuitos).
+            </p>
+
+            <div className="space-y-4">
+              {/* Processo 1 - Validação de Links */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-blue-500">
+                <div className="flex items-start gap-4">
+                  <div className="bg-blue-100 rounded-full p-3 flex-shrink-0">
+                    <LinkIcon className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      Validação de Links de Convite
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Verifica pagamentos aprovados que não receberam link de convite e tenta gerar novamente, enviando notificações por email e Telegram.
+                    </p>
+                    <div className="bg-blue-50 rounded p-3 text-sm space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-blue-600" />
+                        <span className="font-semibold text-gray-700">Frequência:</span>
+                        <code className="bg-white px-2 py-1 rounded text-blue-600">A cada 15 minutos</code>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4 text-blue-600" />
+                        <span className="font-semibold text-gray-700">Endpoint:</span>
+                        <code className="bg-white px-2 py-1 rounded text-xs">POST /api/cron/process-approved-payments</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Processo 2 - Notificações de Vencimento */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-yellow-500">
+                <div className="flex items-start gap-4">
+                  <div className="bg-yellow-100 rounded-full p-3 flex-shrink-0">
+                    <Bell className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      Notificações de Vencimento
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Envia avisos para membros que estão próximos do vencimento (configurável em 3 períodos: ex. 5, 7 e 30 dias).
+                    </p>
+                    <div className="bg-yellow-50 rounded p-3 text-sm space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-yellow-600" />
+                        <span className="font-semibold text-gray-700">Frequência:</span>
+                        <code className="bg-white px-2 py-1 rounded text-yellow-600">1x por dia (ex: 08:00)</code>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4 text-yellow-600" />
+                        <span className="font-semibold text-gray-700">Endpoint:</span>
+                        <code className="bg-white px-2 py-1 rounded text-xs">POST /api/cron/send-notifications</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Processo 3 - Remoção de Expirados */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-red-500">
+                <div className="flex items-start gap-4">
+                  <div className="bg-red-100 rounded-full p-3 flex-shrink-0">
+                    <Users className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      Remoção de Membros Expirados
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Remove automaticamente membros com acesso vencido dos grupos do Telegram (horário configurável).
+                    </p>
+                    <div className="bg-red-50 rounded p-3 text-sm space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-red-600" />
+                        <span className="font-semibold text-gray-700">Frequência:</span>
+                        <code className="bg-white px-2 py-1 rounded text-red-600">1x por dia (ex: 03:00)</code>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4 text-red-600" />
+                        <span className="font-semibold text-gray-700">Endpoint:</span>
+                        <code className="bg-white px-2 py-1 rounded text-xs">POST /api/cron/remove-expired</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Processo 4 - Verificação de Expirações */}
+              <div className="bg-white rounded-lg p-6 border-l-4 border-purple-500">
+                <div className="flex items-start gap-4">
+                  <div className="bg-purple-100 rounded-full p-3 flex-shrink-0">
+                    <CheckCircle className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      Verificação de Expirações
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-3">
+                      Atualiza status de membros que venceram, marcando-os como "expirado" no banco de dados.
+                    </p>
+                    <div className="bg-purple-50 rounded p-3 text-sm space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                        <span className="font-semibold text-gray-700">Frequência:</span>
+                        <code className="bg-white px-2 py-1 rounded text-purple-600">A cada 1 hora</code>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4 text-purple-600" />
+                        <span className="font-semibold text-gray-700">Endpoint:</span>
+                        <code className="bg-white px-2 py-1 rounded text-xs">POST /api/cron/check-expirations</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Como Configurar */}
+            <div className="mt-8 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg p-6">
+              <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                <Settings className="w-6 h-6" />
+                Como Configurar os Cron Jobs
+              </h3>
+              <p className="text-sm mb-4 opacity-90">
+                Use serviços gratuitos como <strong>cron-job.org</strong> ou <strong>EasyCron</strong>:
+              </p>
+              <ol className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="bg-white text-cyan-600 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
+                  <span>Crie uma conta em <strong>cron-job.org</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-white text-cyan-600 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
+                  <span>Adicione cada endpoint acima como um novo cron job</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-white text-cyan-600 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">3</span>
+                  <span>Configure a frequência recomendada para cada um</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="bg-white text-cyan-600 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">4</span>
+                  <span>Use método <strong>POST</strong> e adicione o header <code className="bg-cyan-700 px-2 py-0.5 rounded">Authorization: Bearer SEU_CRON_SECRET</code></span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
         {/* Documentação */}
         <section>
           <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-2xl p-8 text-center">
