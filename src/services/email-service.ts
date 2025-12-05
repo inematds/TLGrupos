@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { getServiceSupabase } from '@/lib/supabase';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabase = getServiceSupabase();
 
 export interface SendEmailParams {
   to: string;
@@ -22,17 +19,26 @@ export interface SendInviteLinkParams {
 
 /**
  * Envia email usando o provedor configurado
- * Pode ser Resend, SendGrid, AWS SES, etc.
+ * Busca configurações do banco de dados (system_config)
  */
 export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   try {
-    const emailProvider = process.env.EMAIL_PROVIDER || 'resend';
+    // Buscar provedor de email do banco
+    const { data: configData } = await supabase
+      .from('system_config')
+      .select('chave, valor')
+      .eq('chave', 'email_provider')
+      .single();
+
+    const emailProvider = configData?.valor || process.env.EMAIL_PROVIDER || 'resend';
+
+    console.log(`[Email] Usando provedor: ${emailProvider}`);
 
     if (emailProvider === 'resend') {
       return await sendEmailResend(params);
     } else if (emailProvider === 'sendgrid') {
       return await sendEmailSendGrid(params);
-    } else if (emailProvider === 'smtp') {
+    } else if (emailProvider === 'gmail' || emailProvider === 'smtp') {
       return await sendEmailSMTP(params);
     } else {
       console.log('Email simulado (configure EMAIL_PROVIDER):', params);
@@ -136,28 +142,39 @@ async function sendEmailSendGrid(params: SendEmailParams): Promise<boolean> {
 
 /**
  * Envia email usando SMTP (Gmail, Outlook, etc)
+ * Busca credenciais do banco (gmail_user e gmail_app_password)
  */
 async function sendEmailSMTP(params: SendEmailParams): Promise<boolean> {
-  const SMTP_HOST = process.env.SMTP_HOST;
-  const SMTP_PORT = process.env.SMTP_PORT;
-  const SMTP_USER = process.env.SMTP_USER;
-  const SMTP_PASS = process.env.SMTP_PASS;
-  const SMTP_FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM;
-
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
-    console.error('Configurações SMTP incompletas (SMTP_HOST, SMTP_USER, SMTP_PASS necessários)');
-    return false;
-  }
-
   try {
-    // Importar nodemailer dinamicamente
+    // Buscar credenciais do banco
+    const { data: credentials } = await supabase
+      .from('system_config')
+      .select('chave, valor')
+      .in('chave', ['gmail_user', 'gmail_app_password']);
+
+    const gmailUser = credentials?.find(c => c.chave === 'gmail_user')?.valor;
+    const gmailPassword = credentials?.find(c => c.chave === 'gmail_app_password')?.valor;
+
+    // Fallback para variáveis de ambiente
+    const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const SMTP_PORT = process.env.SMTP_PORT || '587';
+    const SMTP_USER = gmailUser || process.env.SMTP_USER;
+    const SMTP_PASS = gmailPassword || process.env.SMTP_PASS;
+    const SMTP_FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM;
+
+    if (!SMTP_USER || !SMTP_PASS) {
+      console.error('[Email SMTP] Configurações incompletas - configure gmail_user e gmail_app_password em /configuracoes');
+      return false;
+    }
+
+    // Importar nodemailer
     const nodemailer = require('nodemailer');
 
     // Criar transporter
     const transporter = nodemailer.createTransport({
       host: SMTP_HOST,
-      port: parseInt(SMTP_PORT || '587'),
-      secure: SMTP_PORT === '465', // true para 465, false para outras portas
+      port: parseInt(SMTP_PORT),
+      secure: SMTP_PORT === '465', // true para 465, false para 587
       auth: {
         user: SMTP_USER,
         pass: SMTP_PASS,
@@ -173,10 +190,10 @@ async function sendEmailSMTP(params: SendEmailParams): Promise<boolean> {
       html: params.html,
     });
 
-    console.log(`[Email SMTP] Enviado com sucesso para ${params.to} - ID: ${info.messageId}`);
+    console.log(`[Email SMTP] ✓ Enviado para ${params.to} - ID: ${info.messageId}`);
     return true;
   } catch (error: any) {
-    console.error('[Email SMTP] Erro ao enviar:', error.message);
+    console.error('[Email SMTP] ✗ Erro:', error.message);
     return false;
   }
 }
