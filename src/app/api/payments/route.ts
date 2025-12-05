@@ -195,16 +195,19 @@ export async function PATCH(request: NextRequest) {
 
     // Se for aprovar, usar a função do banco
     if (action === 'approve') {
-      if (!approved_by) {
+      // Aceita tanto approved_by (inglês) quanto aprovado_por (português)
+      const approver = approved_by || body.aprovado_por;
+
+      if (!approver) {
         return NextResponse.json(
-          { error: 'approved_by é obrigatório para aprovação' },
+          { error: 'approved_by ou aprovado_por é obrigatório para aprovação' },
           { status: 400 }
         );
       }
 
       const { data, error } = await supabase.rpc('approve_payment', {
         p_payment_id: payment_id,
-        p_approved_by: approved_by,
+        p_approved_by: approver,
       });
 
       if (error) {
@@ -318,9 +321,12 @@ export async function PATCH(request: NextRequest) {
 
     // Se for rejeitar, usar a função do banco
     if (action === 'reject') {
-      if (!rejected_by) {
+      // Aceita tanto rejected_by (inglês) quanto rejeitado_por (português)
+      const rejecter = rejected_by || body.rejeitado_por;
+
+      if (!rejecter) {
         return NextResponse.json(
-          { error: 'rejected_by é obrigatório para rejeição' },
+          { error: 'rejected_by ou rejeitado_por é obrigatório para rejeição' },
           { status: 400 }
         );
       }
@@ -334,7 +340,7 @@ export async function PATCH(request: NextRequest) {
 
       const { data, error } = await supabase.rpc('reject_payment', {
         p_payment_id: payment_id,
-        p_rejected_by: rejected_by,
+        p_rejected_by: rejecter,
         p_motivo: motivo_rejeicao,
       });
 
