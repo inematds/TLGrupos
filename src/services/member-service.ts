@@ -347,11 +347,14 @@ export async function getStats() {
 
   // Se a view funcionar e tiver dados válidos, usar ela
   if (!statsViewError && statsViewData && statsViewData.total_cadastros > 0) {
+    console.log('[getStats] Usando view stats do Supabase:', statsViewData.total_cadastros, 'membros');
     return statsViewData as Stats;
   }
 
   // Fallback: calcular estatísticas manualmente se a view não funcionar
-  console.log('View stats não disponível ou vazia, calculando manualmente...');
+  console.log('[getStats] View stats não disponível ou vazia, calculando manualmente...');
+  console.log('[getStats] statsViewError:', statsViewError);
+  console.log('[getStats] statsViewData:', statsViewData);
 
   // Buscar todos os membros
   const { data: allMembers, error: membersError } = await supabase
