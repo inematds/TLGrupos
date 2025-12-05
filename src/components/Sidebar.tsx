@@ -24,7 +24,8 @@ import {
   FormInput,
   Wallet,
   Plus,
-  Bell
+  Bell,
+  Activity
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -84,6 +85,12 @@ export default function Sidebar() {
       icon: Settings,
       href: '/configuracoes',
       description: 'Ajustes do sistema',
+    },
+    {
+      title: 'Status',
+      icon: Activity,
+      href: '/status',
+      description: 'Diagnóstico do sistema',
     },
     // Seção de Grupos (consolidada)
     {
