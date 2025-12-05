@@ -39,7 +39,78 @@ export async function GET() {
   }
 }
 
-// PUT /api/config - Atualiza ou cria uma configuração
+// POST /api/config - Salva múltiplas configurações de uma vez (evita rate limiting)
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { configs } = body;
+
+    if (!configs || !Array.isArray(configs)) {
+      return NextResponse.json(
+        { success: false, error: 'configs deve ser um array' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`💾 [POST /api/config] Salvando ${configs.length} configurações em batch...`);
+
+    // Processar em grupos menores para evitar timeout
+    const BATCH_SIZE = 10;
+    const results = [];
+
+    for (let i = 0; i < configs.length; i += BATCH_SIZE) {
+      const batch = configs.slice(i, i + BATCH_SIZE);
+
+      // Para cada config no batch, fazer upsert
+      const batchPromises = batch.map(async ({ chave, valor }: { chave: string; valor: string }) => {
+        try {
+          // Usar upsert do Supabase (mais eficiente)
+          const { error } = await supabase
+            .from('system_config')
+            .upsert(
+              { chave, valor, updated_at: new Date().toISOString() },
+              { onConflict: 'chave' }
+            );
+
+          if (error) throw error;
+          return { chave, success: true };
+        } catch (error: any) {
+          console.error(`❌ Erro ao salvar ${chave}:`, error.message);
+          return { chave, success: false, error: error.message };
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      results.push(...batchResults);
+    }
+
+    const failedCount = results.filter(r => !r.success).length;
+
+    if (failedCount === 0) {
+      console.log(`✅ [POST /api/config] Todas as ${configs.length} configurações salvas com sucesso!`);
+      return NextResponse.json({
+        success: true,
+        message: `${configs.length} configurações salvas com sucesso`,
+        results
+      });
+    } else {
+      console.warn(`⚠️ [POST /api/config] ${failedCount} de ${configs.length} falharam`);
+      return NextResponse.json({
+        success: false,
+        message: `${failedCount} de ${configs.length} configurações falharam`,
+        results
+      }, { status: 207 }); // 207 Multi-Status
+    }
+  } catch (error: any) {
+    console.error('❌ [POST /api/config] Erro geral:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/config - Atualiza ou cria uma configuração (DEPRECATED - usar POST para múltiplas)
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
@@ -52,35 +123,15 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Primeiro, verifica se a config já existe
-    const { data: existing } = await supabase
+    // Usar upsert para simplicidade
+    const { data, error } = await supabase
       .from('system_config')
-      .select('*')
-      .eq('chave', chave)
-      .maybeSingle();
-
-    let data, error;
-
-    if (existing) {
-      // Atualiza registro existente
-      const result = await supabase
-        .from('system_config')
-        .update({ valor, updated_at: new Date().toISOString() })
-        .eq('chave', chave)
-        .select()
-        .single();
-      data = result.data;
-      error = result.error;
-    } else {
-      // Insere novo registro
-      const result = await supabase
-        .from('system_config')
-        .insert({ chave, valor, updated_at: new Date().toISOString() })
-        .select()
-        .single();
-      data = result.data;
-      error = result.error;
-    }
+      .upsert(
+        { chave, valor, updated_at: new Date().toISOString() },
+        { onConflict: 'chave' }
+      )
+      .select()
+      .single();
 
     if (error) throw error;
 

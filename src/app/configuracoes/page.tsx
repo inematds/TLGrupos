@@ -267,53 +267,39 @@ export default function SettingsPage() {
         { chave: 'notif_texto_noticias', valor: notifTextoNoticias },
       ];
 
-      console.log('💾 [Configurações] Salvando configs:', {
-        notifNoticiasAtivo,
-        notifNoticiasTelegram,
-        notifNoticiasEmail,
+      console.log(`💾 [Configurações] Salvando ${configs.length} configs em batch...`);
+
+      // Usar novo endpoint POST para salvar todas as configs de uma vez
+      // Isso evita rate limiting do Cloudflare (antes eram 41 requisições separadas)
+      const response = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ configs }),
       });
 
-      const promises = configs.map(config =>
-        fetch('/api/config', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config),
-        })
-      );
+      if (!response.ok) {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.message || 'Erro ao salvar configurações');
+        } else {
+          const text = await response.text();
+          console.error('❌ [Configurações] Resposta não-JSON:', text.substring(0, 200));
+          throw new Error('Erro no servidor ao salvar configurações');
+        }
+      }
 
-      const responses = await Promise.all(promises);
-      const allOk = responses.every(r => r.ok);
+      const result = await response.json();
 
-      if (allOk) {
+      if (result.success) {
         console.log('✅ [Configurações] Todas configurações salvas com sucesso!');
         setMessage({ text: 'Configurações salvas com sucesso!', type: 'success' });
         // Recarregar configurações para confirmar que foram salvas
         await loadConfigs();
       } else {
-        // Identificar quais falharam
-        const failedResponses = await Promise.all(
-          responses.map(async (r, i) => {
-            if (!r.ok) {
-              try {
-                const contentType = r.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                  const error = await r.json();
-                  return { config: configs[i], error };
-                } else {
-                  const text = await r.text();
-                  console.error('❌ [Configurações] Resposta não-JSON:', text.substring(0, 200));
-                  return { config: configs[i], error: { message: 'Erro no servidor (resposta HTML)' } };
-                }
-              } catch (e) {
-                return { config: configs[i], error: { message: 'Erro ao processar resposta' } };
-              }
-            }
-            return null;
-          })
-        );
-        const failures = failedResponses.filter(f => f !== null);
-        console.error('❌ [Configurações] Erros ao salvar:', failures);
-        throw new Error('Erro ao salvar algumas configurações');
+        console.error('❌ [Configurações] Algumas configurações falharam:', result.results);
+        const failedConfigs = result.results.filter((r: any) => !r.success);
+        throw new Error(`${failedConfigs.length} de ${configs.length} configurações falharam`);
       }
     } catch (error: any) {
       console.error('❌ [Configurações] Erro geral ao salvar:', error);
