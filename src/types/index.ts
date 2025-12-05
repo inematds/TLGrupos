@@ -225,6 +225,11 @@ export interface Payment {
   metadata?: any;
   created_at: string;
   updated_at: string;
+  // Campos adicionais
+  email?: string;
+  invite_link?: string;
+  email_sent?: boolean;
+  notification_sent?: boolean;
   // Joined data
   member?: Member;
   plan?: Plan;

@@ -993,6 +993,78 @@ export default function GerenciarPagamentos() {
                     </div>
                   )}
 
+                  {/* Link de Convite */}
+                  {selectedPayment.invite_link && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Link de Convite</label>
+                      <div className="mt-1 flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={selectedPayment.invite_link}
+                          readOnly
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                        />
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(selectedPayment.invite_link!);
+                            alert('Link copiado!');
+                          }}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                        >
+                          Copiar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status de Notificação */}
+                  {selectedPayment.status === 'aprovado' && (
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Status de Notificação</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          {selectedPayment.invite_link ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="text-green-700 font-medium">Link de convite gerado</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4 text-orange-600" />
+                              <span className="text-orange-700 font-medium">Link de convite não gerado</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {selectedPayment.email_sent ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="text-green-700 font-medium">Email enviado</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4 text-red-600" />
+                              <span className="text-red-700 font-medium">Email não enviado</span>
+                            </>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {selectedPayment.notification_sent ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="text-green-700 font-medium">Notificação enviada (Email/Telegram)</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4 text-red-600" />
+                              <span className="text-red-700 font-medium">Notificação não enviada</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Comprovante */}
                   {selectedPayment.comprovante_url && (
                     <div>
