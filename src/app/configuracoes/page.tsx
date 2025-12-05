@@ -294,8 +294,19 @@ export default function SettingsPage() {
         const failedResponses = await Promise.all(
           responses.map(async (r, i) => {
             if (!r.ok) {
-              const error = await r.json();
-              return { config: configs[i], error };
+              try {
+                const contentType = r.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                  const error = await r.json();
+                  return { config: configs[i], error };
+                } else {
+                  const text = await r.text();
+                  console.error('❌ [Configurações] Resposta não-JSON:', text.substring(0, 200));
+                  return { config: configs[i], error: { message: 'Erro no servidor (resposta HTML)' } };
+                }
+              } catch (e) {
+                return { config: configs[i], error: { message: 'Erro ao processar resposta' } };
+              }
             }
             return null;
           })
