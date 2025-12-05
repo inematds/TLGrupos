@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   RefreshCw,
   BarChart3,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 interface NotificationStats {
@@ -42,6 +43,7 @@ export default function NotificationsPage() {
   const [stats, setStats] = useState<NotificationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'pending' | 'failed'>('overview');
+  const [paymentsWithoutLink, setPaymentsWithoutLink] = useState<number>(0);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -51,6 +53,17 @@ export default function NotificationsPage() {
 
       if (result.success) {
         setStats(result.data);
+      }
+
+      // Buscar pagamentos sem link
+      try {
+        const paymentsRes = await fetch('/api/cron/process-approved-payments');
+        const paymentsData = await paymentsRes.json();
+        if (paymentsData.success && paymentsData.total !== undefined) {
+          setPaymentsWithoutLink(paymentsData.total);
+        }
+      } catch (err) {
+        console.log('Erro ao buscar pagamentos sem link:', err);
       }
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error);
@@ -106,7 +119,7 @@ export default function NotificationsPage() {
         </div>
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -165,6 +178,52 @@ export default function NotificationsPage() {
                 <p className="text-xl font-bold text-red-600">{stats.summary.failed}</p>
               </div>
             </div>
+          </div>
+
+          {/* Card de Pagamentos sem Link */}
+          <div className={`rounded-lg shadow-sm border p-6 ${
+            paymentsWithoutLink > 0
+              ? 'bg-amber-50 border-amber-300'
+              : 'bg-white border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-3 rounded-lg ${
+                paymentsWithoutLink > 0
+                  ? 'bg-amber-100'
+                  : 'bg-gray-100'
+              }`}>
+                <LinkIcon className={`w-6 h-6 ${
+                  paymentsWithoutLink > 0
+                    ? 'text-amber-600'
+                    : 'text-gray-400'
+                }`} />
+              </div>
+              {paymentsWithoutLink > 0 && (
+                <span className="px-2 py-1 bg-amber-200 text-amber-800 text-xs font-bold rounded-full">
+                  ATENÇÃO
+                </span>
+              )}
+            </div>
+            <h3 className="text-sm font-medium text-gray-600">Links Pendentes</h3>
+            <p className={`text-3xl font-bold mt-2 ${
+              paymentsWithoutLink > 0
+                ? 'text-amber-600'
+                : 'text-green-600'
+            }`}>
+              {paymentsWithoutLink}
+            </p>
+            <p className="text-xs text-gray-500 mt-2">
+              {paymentsWithoutLink > 0
+                ? 'Aguardando processamento'
+                : 'Todos com link gerado ✓'}
+            </p>
+            {paymentsWithoutLink > 0 && (
+              <div className="mt-3 pt-3 border-t border-amber-200">
+                <p className="text-xs text-amber-700">
+                  ⚙️ Processo automático a cada 15min
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

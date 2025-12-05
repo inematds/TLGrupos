@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Member, Stats } from '@/types';
-import { DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle, Link as LinkIcon } from 'lucide-react';
 
 interface PaymentStats {
   total: number;
@@ -10,6 +10,7 @@ interface PaymentStats {
   aprovados: number;
   valorTotal: number;
   valorMesAtual: number;
+  semLink?: number; // Pagamentos aprovados sem link de convite
 }
 
 export default function DashboardPage() {
@@ -59,6 +60,7 @@ export default function DashboardPage() {
             total: payments.length,
             pendentes: payments.filter((p: any) => p.status === 'pendente').length,
             aprovados: payments.filter((p: any) => p.status === 'aprovado').length,
+            semLink: payments.filter((p: any) => p.status === 'aprovado' && !p.invite_link).length,
             valorTotal: payments
               .filter((p: any) => p.status === 'aprovado')
               .reduce((sum: number, p: any) => sum + parseFloat(p.valor), 0),
@@ -306,6 +308,27 @@ export default function DashboardPage() {
                 <p className="mt-2 text-3xl font-bold text-cyan-600">{stats.ativos_sem_telegram || 0}</p>
                 <p className="text-xs text-gray-500 mt-1">Ativos sem vinculação</p>
               </div>
+
+              {/* Pagamentos sem Link */}
+              {paymentStats && paymentStats.semLink !== undefined && paymentStats.semLink > 0 && (
+                <div className="bg-amber-50 rounded-xl shadow p-6 border-l-4 border-amber-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-amber-700 flex items-center gap-2">
+                        <LinkIcon className="w-4 h-4" />
+                        Aguardando Link
+                      </h3>
+                      <p className="mt-2 text-3xl font-bold text-amber-600">{paymentStats.semLink}</p>
+                      <p className="text-xs text-amber-600 mt-1">
+                        Aprovados sem link de convite
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-xs text-amber-700 bg-amber-100 rounded p-2">
+                    ⚙️ Processo automático rodando a cada 15min
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
