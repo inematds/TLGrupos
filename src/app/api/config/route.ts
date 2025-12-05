@@ -9,19 +9,29 @@ const supabase = createClient(
 // GET /api/config - Retorna todas as configurações do banco
 export async function GET() {
   try {
+    console.log('📥 [GET /api/config] Buscando configurações...');
     const { data, error } = await supabase
-      .from('configs')
+      .from('system_config')
       .select('*')
       .order('chave');
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ [GET /api/config] Erro Supabase:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
+      throw error;
+    }
 
+    console.log('✅ [GET /api/config] Sucesso:', data?.length || 0, 'configs');
     return NextResponse.json({
       success: true,
       data: data || []
     });
   } catch (error: any) {
-    console.error('Erro ao buscar configurações:', error);
+    console.error('❌ [GET /api/config] Erro geral:', error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
@@ -42,15 +52,35 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Upsert: insere se não existe, atualiza se já existe
-    const { data, error } = await supabase
-      .from('configs')
-      .upsert(
-        { chave, valor },
-        { onConflict: 'chave' }
-      )
-      .select()
-      .single();
+    // Primeiro, verifica se a config já existe
+    const { data: existing } = await supabase
+      .from('system_config')
+      .select('*')
+      .eq('chave', chave)
+      .maybeSingle();
+
+    let data, error;
+
+    if (existing) {
+      // Atualiza registro existente
+      const result = await supabase
+        .from('system_config')
+        .update({ valor, updated_at: new Date().toISOString() })
+        .eq('chave', chave)
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    } else {
+      // Insere novo registro
+      const result = await supabase
+        .from('system_config')
+        .insert({ chave, valor, updated_at: new Date().toISOString() })
+        .select()
+        .single();
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) throw error;
 
