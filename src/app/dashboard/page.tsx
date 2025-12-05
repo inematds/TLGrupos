@@ -396,26 +396,6 @@ export default function DashboardPage() {
                 <p className="text-xs text-gray-500 mt-1">Ativos sem vinculação</p>
               </div>
 
-              {/* Pagamentos sem Link */}
-              {paymentStats && paymentStats.semLink !== undefined && paymentStats.semLink > 0 && (
-                <div className="bg-amber-50 rounded-xl shadow p-6 border-l-4 border-amber-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-amber-700 flex items-center gap-2">
-                        <LinkIcon className="w-4 h-4" />
-                        Aguardando Link
-                      </h3>
-                      <p className="mt-2 text-3xl font-bold text-amber-600">{paymentStats.semLink}</p>
-                      <p className="text-xs text-amber-600 mt-1">
-                        Aprovados sem link de convite
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-3 text-xs text-amber-700 bg-amber-100 rounded p-2">
-                    ⚙️ Processo automático rodando a cada 15min
-                  </div>
-                </div>
-              )}
             </div>
           </>
         )}
