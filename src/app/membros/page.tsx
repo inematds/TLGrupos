@@ -1,48 +1,34 @@
 'use client';
 
 import { useState } from 'react';
-import { Wallet, CreditCard, CheckCircle, List, Plus, Tag } from 'lucide-react';
-import FormasPagamento from '@/components/pagamentos/FormasPagamento';
-import ValidarPagamentos from '@/components/pagamentos/ValidarPagamentos';
-import GerenciarPagamentos from '@/components/pagamentos/GerenciarPagamentos';
-import NovoPagamento from '@/components/pagamentos/NovoPagamento';
-import GerenciarPlanos from '@/components/pagamentos/GerenciarPlanos';
+import { Users, UserPlus, FormInput, List } from 'lucide-react';
+import GerenciarMembros from '@/components/membros/GerenciarMembros';
+import NovoMembro from '@/components/membros/NovoMembro';
+import CadastroPublico from '@/components/membros/CadastroPublico';
 
-type Tab = 'formas' | 'planos' | 'validar' | 'gerenciar' | 'novo';
+type Tab = 'gerenciar' | 'novo' | 'cadastro';
 
-export default function PagamentosPage() {
+export default function MembrosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('gerenciar');
 
   const tabs = [
     {
-      id: 'formas' as Tab,
-      label: 'Formas de Pagamento',
-      icon: CreditCard,
-      description: 'Configurar métodos de pagamento',
-    },
-    {
-      id: 'planos' as Tab,
-      label: 'Planos',
-      icon: Tag,
-      description: 'Gerenciar planos de acesso',
-    },
-    {
-      id: 'validar' as Tab,
-      label: 'Validar Pagamentos',
-      icon: CheckCircle,
-      description: 'Aprovar comprovantes PIX',
-    },
-    {
       id: 'gerenciar' as Tab,
-      label: 'Gerenciar Pagamentos',
+      label: 'Gerenciar Membros',
       icon: List,
-      description: 'CRUD completo de pagamentos',
+      description: 'Ver e gerenciar membros',
     },
     {
       id: 'novo' as Tab,
-      label: 'Novo Pagamento',
-      icon: Plus,
-      description: 'Cadastrar novo pagamento',
+      label: 'Novo Membro',
+      icon: UserPlus,
+      description: 'Cadastrar manualmente',
+    },
+    {
+      id: 'cadastro' as Tab,
+      label: 'Cadastro Público',
+      icon: FormInput,
+      description: 'Formulário de cadastro',
     },
   ];
 
@@ -53,11 +39,11 @@ export default function PagamentosPage() {
         <div className="px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Wallet className="w-8 h-8 text-green-600" />
+              <Users className="w-8 h-8 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Gestão de Pagamentos</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Gestão de Membros</h1>
                 <p className="text-sm text-gray-500 mt-1">
-                  Gerenciar formas de pagamento, validações e registros
+                  Gerenciar membros, cadastros e formulários
                 </p>
               </div>
             </div>
@@ -87,7 +73,7 @@ export default function PagamentosPage() {
                     flex items-center gap-2 px-6 py-3 border-b-2 transition-colors
                     ${
                       isActive
-                        ? 'border-green-600 text-green-600 font-semibold'
+                        ? 'border-blue-600 text-blue-600 font-semibold'
                         : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
                     }
                   `}
@@ -106,11 +92,9 @@ export default function PagamentosPage() {
 
       {/* Tab Content */}
       <main className="px-8 py-8">
-        {activeTab === 'formas' && <FormasPagamento />}
-        {activeTab === 'planos' && <GerenciarPlanos />}
-        {activeTab === 'validar' && <ValidarPagamentos />}
-        {activeTab === 'gerenciar' && <GerenciarPagamentos />}
-        {activeTab === 'novo' && <NovoPagamento />}
+        {activeTab === 'gerenciar' && <GerenciarMembros />}
+        {activeTab === 'novo' && <NovoMembro />}
+        {activeTab === 'cadastro' && <CadastroPublico />}
       </main>
     </div>
   );

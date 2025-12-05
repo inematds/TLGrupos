@@ -53,44 +53,15 @@ export default function Sidebar() {
     {
       title: 'Membros',
       icon: Users,
-      href: '/members',
-      description: 'Gerenciar membros',
+      href: '/membros',
+      description: 'Gerenciar membros e cadastros',
     },
+    // Seção de Pagamentos (consolidada)
     {
-      title: 'Novo Membro',
-      icon: UserPlus,
-      href: '/novo-membro',
-      description: 'Cadastrar manualmente',
-    },
-    {
-      title: 'Cadastro Público',
-      icon: FormInput,
-      href: '/cadastro',
-      description: 'Formulário de cadastro',
-    },
-    {
-      title: 'Planos de Acesso',
-      icon: Tag,
-      href: '/planos',
-      description: 'Gerenciar planos',
-    },
-    {
-      title: 'Bot',
-      icon: Bot,
-      href: '/bot',
-      description: 'Sistema de auto-cadastro',
-    },
-    {
-      title: 'Configurações',
-      icon: Settings,
-      href: '/configuracoes',
-      description: 'Ajustes do sistema',
-    },
-    {
-      title: 'Status',
-      icon: Activity,
-      href: '/status',
-      description: 'Diagnóstico do sistema',
+      title: 'Pagamentos',
+      icon: Wallet,
+      href: '/pagamentos-new',
+      description: 'Gerenciar pagamentos e planos',
     },
     // Seção de Grupos (consolidada)
     {
@@ -100,12 +71,25 @@ export default function Sidebar() {
       description: 'Gerenciar grupos e convites',
       section: 'bottom',
     },
-    // Seção de Pagamentos (consolidada)
     {
-      title: 'Pagamentos',
-      icon: Wallet,
-      href: '/pagamentos-new',
-      description: 'Gerenciar pagamentos',
+      title: 'Bot',
+      icon: Bot,
+      href: '/bot',
+      description: 'Sistema de auto-cadastro',
+      section: 'bottom',
+    },
+    {
+      title: 'Configurações',
+      icon: Settings,
+      href: '/configuracoes',
+      description: 'Ajustes do sistema',
+      section: 'bottom',
+    },
+    {
+      title: 'Status',
+      icon: Activity,
+      href: '/status',
+      description: 'Diagnóstico do sistema',
       section: 'bottom',
     },
   ];
