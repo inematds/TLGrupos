@@ -747,7 +747,7 @@ export default function GerenciarPagamentos() {
                     required
                   >
                     <option value="">Selecione um membro</option>
-                    {members.map((member) => (
+                    {members && Array.isArray(members) && members.map((member) => (
                       <option key={member.id} value={member.id}>
                         {member.nome} - @{member.telegram_username}
                       </option>
@@ -766,7 +766,7 @@ export default function GerenciarPagamentos() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Sem plano específico</option>
-                    {plans.map((plan) => (
+                    {plans && Array.isArray(plans) && plans.map((plan) => (
                       <option key={plan.id} value={plan.id}>
                         {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
                       </option>
@@ -785,7 +785,7 @@ export default function GerenciarPagamentos() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Selecione uma forma</option>
-                    {formasPagamento.filter(f => f.ativo).map((forma) => (
+                    {formasPagamento && Array.isArray(formasPagamento) && formasPagamento.filter(f => f.ativo).map((forma) => (
                       <option key={forma.id} value={forma.id}>
                         {forma.nome}
                       </option>
@@ -1164,7 +1164,7 @@ export default function GerenciarPagamentos() {
                   required
                 >
                   <option value="">Selecione um membro</option>
-                  {members.map((member) => (
+                  {members && Array.isArray(members) && members.map((member) => (
                     <option key={member.id} value={member.id}>
                       {member.nome} - @{member.telegram_username}
                     </option>
@@ -1183,7 +1183,7 @@ export default function GerenciarPagamentos() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Sem plano específico</option>
-                  {plans.map((plan) => (
+                  {plans && Array.isArray(plans) && plans.map((plan) => (
                     <option key={plan.id} value={plan.id}>
                       {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
                     </option>
@@ -1202,7 +1202,7 @@ export default function GerenciarPagamentos() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
                 >
                   <option value="">Selecione uma forma</option>
-                  {formasPagamento.filter(f => f.ativo).map((forma) => (
+                  {formasPagamento && Array.isArray(formasPagamento) && formasPagamento.filter(f => f.ativo).map((forma) => (
                     <option key={forma.id} value={forma.id}>
                       {forma.nome}
                     </option>
