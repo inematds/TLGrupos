@@ -122,7 +122,6 @@ export async function POST(request: NextRequest) {
       .insert({
         member_id,
         email: memberExists.email,
-        data_vencimento: memberExists.data_vencimento,
         plan_id,
         payment_method_id,
         valor,
@@ -131,7 +130,6 @@ export async function POST(request: NextRequest) {
         comprovante_url,
         pix_chave,
         data_pagamento: data_pagamento || new Date().toISOString(),
-        data_vencimento,
         dias_acesso,
         status: 'pendente',
       })
