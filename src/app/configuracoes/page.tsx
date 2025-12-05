@@ -184,6 +184,18 @@ export default function SettingsPage() {
         if (notifNoticiasEmailConfig) setNotifNoticiasEmail(notifNoticiasEmailConfig.valor === 'true');
         if (notifTituloNoticiasConfig) setNotifTituloNoticias(notifTituloNoticiasConfig.valor);
         if (notifTextoNoticiasConfig) setNotifTextoNoticias(notifTextoNoticiasConfig.valor);
+
+        // Log das configs de notícias carregadas
+        console.log('📥 [Configurações] Notícias carregadas do banco:', {
+          notifNoticiasAtivo: notifNoticiasAtivoConfig?.valor,
+          notifNoticiasTelegram: notifNoticiasTelegramConfig?.valor,
+          notifNoticiasEmail: notifNoticiasEmailConfig?.valor,
+          convertidos: {
+            notifNoticiasAtivo: notifNoticiasAtivoConfig?.valor === 'true',
+            notifNoticiasTelegram: notifNoticiasTelegramConfig?.valor === 'true',
+            notifNoticiasEmail: notifNoticiasEmailConfig?.valor === 'true',
+          }
+        });
       }
     } catch (error) {
       console.error('Erro ao carregar configurações:', error);
