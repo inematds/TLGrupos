@@ -442,7 +442,7 @@ export default function GerenciarPagamentos() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, payment?: Payment) => {
     const badges = {
       pendente: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pendente' },
       aprovado: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Aprovado' },
@@ -454,10 +454,43 @@ export default function GerenciarPagamentos() {
     const Icon = badge.icon;
 
     return (
-      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${badge.color}`}>
-        <Icon className="w-4 h-4" />
-        {badge.label}
-      </span>
+      <div className="flex flex-col gap-1">
+        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${badge.color}`}>
+          <Icon className="w-4 h-4" />
+          {badge.label}
+        </span>
+
+        {/* Badges adicionais para pagamentos aprovados */}
+        {status === 'aprovado' && payment && (
+          <div className="flex gap-1 flex-wrap">
+            {/* Badge de Link */}
+            {payment.invite_link ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                <CheckCircle className="w-3 h-3" />
+                Link
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                <XCircle className="w-3 h-3" />
+                Sem Link
+              </span>
+            )}
+
+            {/* Badge de Email */}
+            {payment.email_sent || payment.notification_sent ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                <CheckCircle className="w-3 h-3" />
+                Email
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                <XCircle className="w-3 h-3" />
+                Sem Email
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -613,7 +646,7 @@ export default function GerenciarPagamentos() {
                   {filteredPayments.map((payment) => (
                     <tr key={payment.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(payment.status)}
+                        {getStatusBadge(payment.status, payment)}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -896,7 +929,7 @@ export default function GerenciarPagamentos() {
                   <div>
                     <label className="text-sm font-medium text-gray-700">Status</label>
                     <div className="mt-1">
-                      {getStatusBadge(selectedPayment.status)}
+                      {getStatusBadge(selectedPayment.status, selectedPayment)}
                     </div>
                   </div>
 
