@@ -1,4 +1,4 @@
-# Validação de CRON Jobs - TLGrupos v1.2.1
+# Validação de CRON Jobs - TLGrupos v1.2.2
 
 ## 📋 Lista de CRON Jobs Disponíveis
 
@@ -272,4 +272,4 @@ A cada 15min - Process Payments (processa pagamentos)
 ---
 
 **Última atualização:** 05/12/2025
-**Versão do Sistema:** v1.2.1
+**Versão do Sistema:** v1.2.2

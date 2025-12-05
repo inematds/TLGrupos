@@ -1,6 +1,6 @@
 {
   "name": "tlgrupos",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Sistema de gerenciamento de membros do Telegram com controle de vencimento",
   "private": true,
   "scripts": {

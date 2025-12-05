@@ -178,7 +178,7 @@ export default function Sidebar() {
       {/* Footer */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
         <div className="text-xs text-gray-500 text-center">
-          <p className="font-medium">TLGrupos v1.2.1</p>
+          <p className="font-medium">TLGrupos v1.2.2</p>
           <p className="mt-1">Sistema de Gestão</p>
         </div>
       </div>

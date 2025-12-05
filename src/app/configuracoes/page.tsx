@@ -409,7 +409,7 @@ export default function SettingsPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Versão:</span>
-                  <span className="font-mono text-gray-900">v1.2.1</span>
+                  <span className="font-mono text-gray-900">v1.2.2</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Banco de Dados:</span>

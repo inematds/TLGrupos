@@ -1,4 +1,4 @@
-# Relatório de Validação dos CRON Jobs - TLGrupos v1.2.1
+# Relatório de Validação dos CRON Jobs - TLGrupos v1.2.2
 
 **Data:** 05/12/2025
 **Status:** ✅ **TODOS OS CRONs VALIDADOS E FUNCIONANDO**
@@ -254,4 +254,4 @@ bash scripts/test-all-crons.sh
 
 **Testado por:** Claude Code
 **Data:** 05/12/2025
-**Versão:** v1.2.1
+**Versão:** v1.2.2
