@@ -238,13 +238,8 @@ export async function sendNotificationToMember(
     throw new Error('Membro não encontrado');
   }
 
-  if (!member.telegram_user_id) {
-    throw new Error('Membro não tem telegram_user_id');
-  }
-
-  // Buscar template de mensagem
-  const templateKey = `mensagem_notificacao_${daysBeforeExpiry}dias`;
-  const template = await getMessageTemplate(templateKey);
+  // Buscar canais ativos
+  const activeChannels = await getActiveChannels();
 
   // Formatar data de vencimento
   const dataVencimento = format(
@@ -253,49 +248,79 @@ export async function sendNotificationToMember(
     { locale: ptBR }
   );
 
-  // Formatar mensagem
-  const message = formatMessage(template, {
-    nome: member.nome,
-    data: dataVencimento,
-    dias: daysBeforeExpiry,
+  // Mensagem padrão
+  const message = `⚠️ *Aviso de Vencimento*
+
+Olá *${member.nome}*!
+
+Seu acesso ao grupo VIP vence em *${daysBeforeExpiry} dias*.
+
+📅 *Data de vencimento:* ${dataVencimento}
+
+💡 Para renovar seu acesso e continuar no grupo, entre em contato.
+
+Não perca! 🚀`;
+
+  const subject = `Aviso de Vencimento - ${daysBeforeExpiry} dias`;
+
+  // Criar registro de notificação
+  const notificationId = await createNotificationRecord({
+    memberId,
+    notificationType: 'expiry_warning',
+    daysBeforeExpiry,
+    subject,
+    message,
   });
 
-  // Enviar mensagem
-  const result = await sendPrivateMessage(member.telegram_user_id, message);
+  const result = { email: false, telegram: false };
 
-  if (!result.success) {
-    throw new Error(`Erro ao enviar mensagem: ${result.error}`);
+  // Enviar Email se ativo
+  if (activeChannels.email && member.email) {
+    try {
+      const emailSent = await sendEmail({
+        to: member.email,
+        subject,
+        text: message.replace(/\*/g, ''),
+        html: message.replace(/\n/g, '<br>').replace(/\*/g, '<strong>').replace(/<strong>/g, '<b>').replace(/<\/strong>/g, '</b>'),
+      });
+      result.email = emailSent;
+      await updateEmailStatus(notificationId, emailSent);
+    } catch (error: any) {
+      await updateEmailStatus(notificationId, false, error.message);
+    }
   }
 
-  // Atualizar flag de notificação
-  const updateField =
-    daysBeforeExpiry === 7
-      ? 'notificado_7dias'
-      : daysBeforeExpiry === 3
-      ? 'notificado_3dias'
-      : 'notificado_1dia';
+  // Enviar Telegram se ativo
+  if (activeChannels.telegram && member.telegram_user_id) {
+    try {
+      const telegramResult = await sendPrivateMessage(member.telegram_user_id, message);
+      result.telegram = telegramResult.success;
+      await updateTelegramStatus(notificationId, telegramResult.success, telegramResult.error);
+    } catch (error: any) {
+      await updateTelegramStatus(notificationId, false, error.message);
+    }
+  }
 
-  await supabase
-    .from('members')
-    .update({ [updateField]: true })
-    .eq('id', memberId);
-
-  // Registrar log
+  // Registrar log compatibilidade
   await supabase.from('logs').insert({
     member_id: memberId,
     acao: 'notificacao',
     detalhes: {
-      tipo: `${daysBeforeExpiry}_dias`,
-      mensagem: message,
+      tipo: `expiry_warning_${daysBeforeExpiry}days`,
+      notification_id: notificationId,
+      email_enviado: result.email,
+      telegram_enviado: result.telegram,
     },
     telegram_user_id: member.telegram_user_id,
     telegram_username: member.telegram_username,
-    executado_por: 'sistema',
+    executado_por: 'Sistema (Cron)',
   });
 
   return {
     success: true,
     message: 'Notificação enviada com sucesso',
+    email: result.email,
+    telegram: result.telegram,
   };
 }
 
@@ -307,27 +332,19 @@ export async function sendExpiryNotifications(daysBeforeExpiry: number) {
   const targetDate = new Date(now);
   targetDate.setDate(targetDate.getDate() + daysBeforeExpiry);
 
-  // Determinar qual flag verificar
-  const notificationField =
-    daysBeforeExpiry === 7
-      ? 'notificado_7dias'
-      : daysBeforeExpiry === 3
-      ? 'notificado_3dias'
-      : 'notificado_1dia';
+  // Buscar membros ativos que vencem nesta data
+  // Não usar mais flags de notificação, usar notification_history
+  const startDate = targetDate.toISOString().split('T')[0];
+  const endDate = new Date(targetDate.getTime() + 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
 
-  // Buscar membros que ainda não foram notificados
   const { data: members, error } = await supabase
     .from('members')
     .select('*')
     .eq('status', 'ativo')
-    .eq(notificationField, false)
-    .gte('data_vencimento', targetDate.toISOString().split('T')[0])
-    .lt(
-      'data_vencimento',
-      new Date(targetDate.getTime() + 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split('T')[0]
-    );
+    .gte('data_vencimento', startDate)
+    .lt('data_vencimento', endDate);
 
   if (error) {
     throw new Error(`Erro ao buscar membros: ${error.message}`);
@@ -344,12 +361,26 @@ export async function sendExpiryNotifications(daysBeforeExpiry: number) {
   const results = {
     success: 0,
     failed: 0,
+    skipped: 0,
     errors: [] as Array<{ memberId: string; error: string }>,
   };
 
   // Enviar notificações
   for (const member of members) {
     try {
+      // Verificar se já enviou notificação para este período
+      const alreadySent = await checkNotificationSent(
+        member.id,
+        'expiry_warning',
+        daysBeforeExpiry
+      );
+
+      if (alreadySent.alreadySent) {
+        results.skipped++;
+        console.log(`[Notification] Aviso de ${daysBeforeExpiry} dias já enviado para ${member.nome} (${member.id})`);
+        continue;
+      }
+
       await sendNotificationToMember(member.id, daysBeforeExpiry);
       results.success++;
     } catch (error: any) {
@@ -370,16 +401,46 @@ export async function sendExpiryNotifications(daysBeforeExpiry: number) {
 }
 
 /**
- * Envia todas as notificações programadas (7, 3 e 1 dia antes)
+ * Envia todas as notificações programadas baseadas nas configurações
  */
 export async function sendAllScheduledNotifications() {
-  const results = {
-    day7: await sendExpiryNotifications(7),
-    day3: await sendExpiryNotifications(3),
-    day1: await sendExpiryNotifications(1),
-  };
+  // Buscar configurações de avisos do banco
+  const config = await getExpiryWarningsConfig();
 
-  return results;
+  if (!config.enabled) {
+    console.log('[Notification] Sistema de avisos de vencimento desativado nas configurações');
+    return {
+      success: true,
+      message: 'Sistema de avisos desativado',
+      results: {},
+    };
+  }
+
+  const results: any = {};
+  const warnings = config.warnings.filter(w => w.active);
+
+  console.log(`[Notification] Processando ${warnings.length} tipos de avisos: ${warnings.map(w => `${w.days} dias`).join(', ')}`);
+
+  // Enviar notificações para cada período configurado e ativo
+  for (const warning of warnings) {
+    try {
+      const result = await sendExpiryNotifications(warning.days);
+      results[`warning_${warning.number}_${warning.days}days`] = result;
+      console.log(`[Notification] Aviso ${warning.number} (${warning.days} dias): ${result.count} membros processados`);
+    } catch (error: any) {
+      console.error(`[Notification] Erro ao processar aviso ${warning.number} (${warning.days} dias):`, error);
+      results[`warning_${warning.number}_${warning.days}days`] = {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  return {
+    success: true,
+    warningsProcessed: warnings.length,
+    results,
+  };
 }
 
 /**

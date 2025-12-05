@@ -25,7 +25,8 @@ import {
   Wallet,
   Plus,
   Bell,
-  Activity
+  Activity,
+  Clock
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -90,6 +91,13 @@ export default function Sidebar() {
       icon: Activity,
       href: '/status',
       description: 'Diagnóstico do sistema',
+      section: 'bottom',
+    },
+    {
+      title: 'Cron Jobs',
+      icon: Clock,
+      href: '/admin/cron-jobs',
+      description: 'Processos automáticos',
       section: 'bottom',
     },
   ];
