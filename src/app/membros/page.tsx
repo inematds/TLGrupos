@@ -1,22 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, UserPlus, FormInput, List } from 'lucide-react';
-import GerenciarMembros from '@/components/membros/GerenciarMembros';
+import { Users, UserPlus, FormInput, List, ExternalLink } from 'lucide-react';
 import NovoMembro from '@/components/membros/NovoMembro';
 import CadastroPublico from '@/components/membros/CadastroPublico';
+import TodosMembros from '@/components/membros/TodosMembros';
 
-type Tab = 'gerenciar' | 'novo' | 'cadastro';
+type Tab = 'todos' | 'novo' | 'cadastro';
 
 export default function MembrosPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('novo');
+  const [activeTab, setActiveTab] = useState<Tab>('todos');
 
   const tabs = [
     {
-      id: 'gerenciar' as Tab,
-      label: 'Gerenciar Membros',
+      id: 'todos' as Tab,
+      label: 'Todos Membros',
       icon: List,
-      description: 'Ver e gerenciar membros',
+      description: 'Visualizar e gerenciar',
     },
     {
       id: 'novo' as Tab,
@@ -33,7 +33,7 @@ export default function MembrosPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 ml-64">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="px-8 py-4">
@@ -47,12 +47,14 @@ export default function MembrosPage() {
                 </p>
               </div>
             </div>
-            <a
-              href="/dashboard"
-              className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              ← Voltar ao Dashboard
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href="/dashboard"
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                ← Dashboard
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -92,7 +94,7 @@ export default function MembrosPage() {
 
       {/* Tab Content */}
       <main className="px-8 py-8">
-        {activeTab === 'gerenciar' && <GerenciarMembros />}
+        {activeTab === 'todos' && <TodosMembros />}
         {activeTab === 'novo' && <NovoMembro />}
         {activeTab === 'cadastro' && <CadastroPublico />}
       </main>

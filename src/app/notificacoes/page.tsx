@@ -67,7 +67,7 @@ export default function NotificationsPage() {
 
   if (loading || !stats) {
     return (
-      <div className="min-h-screen bg-gray-50 pl-64">
+      <div className="min-h-screen bg-gray-50 ">
         <div className="p-8">
           <div className="flex items-center justify-center py-20">
             <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
@@ -83,7 +83,7 @@ export default function NotificationsPage() {
     .reverse();
 
   return (
-    <div className="min-h-screen bg-gray-50 pl-64">
+    <div className="min-h-screen bg-gray-50 ">
       <div className="p-8">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">

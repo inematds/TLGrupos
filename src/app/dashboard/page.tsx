@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Member, Stats } from '@/types';
-import MemberForm from '@/components/MemberForm';
-import { Plus, DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 
 interface PaymentStats {
   total: number;
@@ -19,7 +18,6 @@ export default function DashboardPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('requer_atencao');
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -133,36 +131,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 w-full">
         {/* Header */}
         <header className="bg-white border-b border-gray-200">
           <div className="px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard v1.1.0</h1>
-                <p className="text-sm text-gray-500 mt-1">Visão geral do sistema - Atualizado</p>
-              </div>
-              <div className="flex gap-3">
-                <a
-                  href="/dashboard/pagamentos-novo"
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                >
-                  💰 Novo Pagamento
-                </a>
-                <a
-                  href="/dashboard/convites"
-                  className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
-                >
-                  🔗 Convites
-                </a>
-                <button
-                  onClick={() => setIsFormOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                >
-                  <Plus className="w-5 h-5" />
-                  Novo Membro
-                </button>
-              </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-sm text-gray-500 mt-1">Visão geral do sistema</p>
             </div>
           </div>
         </header>
@@ -340,45 +315,6 @@ export default function DashboardPage() {
           </>
         )}
 
-        {/* Ações Rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <a
-            href="/dashboard/pagamentos-gerenciar"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-green-500 text-center"
-          >
-            <div className="text-4xl mb-2">💰</div>
-            <h3 className="font-semibold text-gray-900">Gerenciar Pagamentos</h3>
-            <p className="text-sm text-gray-500 mt-1">Aprovar e visualizar</p>
-          </a>
-
-          <a
-            href="/dashboard/inclusao"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-blue-500 text-center"
-          >
-            <div className="text-4xl mb-2">➕</div>
-            <h3 className="font-semibold text-gray-900">Incluir no Grupo</h3>
-            <p className="text-sm text-gray-500 mt-1">Enviar convites</p>
-          </a>
-
-          <a
-            href="/dashboard/groups"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-purple-500 text-center"
-          >
-            <div className="text-4xl mb-2">👥</div>
-            <h3 className="font-semibold text-gray-900">Grupos Telegram</h3>
-            <p className="text-sm text-gray-500 mt-1">Gerenciar grupos</p>
-          </a>
-
-          <a
-            href="/dashboard/stats"
-            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow border-t-4 border-orange-500 text-center"
-          >
-            <div className="text-4xl mb-2">📊</div>
-            <h3 className="font-semibold text-gray-900">Estatísticas</h3>
-            <p className="text-sm text-gray-500 mt-1">Relatórios completos</p>
-          </a>
-        </div>
-
         {/* Filtros */}
         <div className="bg-white rounded-lg shadow mb-6 p-4">
           <div className="flex gap-4 items-center">
@@ -498,16 +434,6 @@ export default function DashboardPage() {
           </table>
         </div>
       </main>
-
-      {/* Modal do Formulário */}
-      <MemberForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSuccess={() => {
-          fetchData();
-          setTimeout(() => setIsFormOpen(false), 2000);
-        }}
-      />
     </div>
   );
 }
