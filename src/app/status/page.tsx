@@ -24,7 +24,22 @@ export default function StatusPage() {
     const results: HealthCheck[] = [];
 
     try {
-      // 1. Verificar Stats
+      // 1. Verificação completa de saúde
+      const healthRes = await fetch('/api/health');
+      const healthData = await healthRes.json();
+
+      if (healthData.checks) {
+        healthData.checks.forEach((check: any) => {
+          results.push({
+            name: check.name,
+            status: check.status,
+            message: check.message || JSON.stringify(check.details, null, 2),
+            details: check.details
+          });
+        });
+      }
+
+      // 2. Verificar Stats
       const statsRes = await fetch('/api/stats');
       const statsData = await statsRes.json();
 
