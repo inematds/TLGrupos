@@ -10,7 +10,9 @@ interface PaymentStats {
   aprovados: number;
   valorTotal: number;
   valorMesAtual: number;
-  semLink?: number; // Pagamentos aprovados sem link de convite
+  aprovadosSemLink: number; // Pagamentos aprovados sem link de convite
+  aprovadosSemEmail: number; // Pagamentos aprovados sem envio de email
+  aprovadosSemMembro: number; // Pagamentos aprovados mas membro não entrou no sistema
 }
 
 export default function DashboardPage() {
@@ -56,17 +58,25 @@ export default function DashboardPage() {
           const mesAtual = now.getMonth();
           const anoAtual = now.getFullYear();
 
+          const aprovados = payments.filter((p: any) => p.status === 'aprovado');
+
           setPaymentStats({
             total: payments.length,
             pendentes: payments.filter((p: any) => p.status === 'pendente').length,
-            aprovados: payments.filter((p: any) => p.status === 'aprovado').length,
-            semLink: payments.filter((p: any) => p.status === 'aprovado' && !p.invite_link).length,
-            valorTotal: payments
-              .filter((p: any) => p.status === 'aprovado')
-              .reduce((sum: number, p: any) => sum + parseFloat(p.valor), 0),
-            valorMesAtual: payments
+            aprovados: aprovados.length,
+            aprovadosSemLink: aprovados.filter((p: any) => !p.invite_link).length,
+            aprovadosSemEmail: aprovados.filter((p: any) => {
+              // Pagamento aprovado mas sem envio de email
+              // Assumindo que tem campo email_sent ou similar
+              return !p.email_sent && !p.notification_sent;
+            }).length,
+            aprovadosSemMembro: aprovados.filter((p: any) => {
+              // Pagamento aprovado mas membro não está ativo no sistema
+              return !p.member || p.member.status !== 'ativo';
+            }).length,
+            valorTotal: aprovados.reduce((sum: number, p: any) => sum + parseFloat(p.valor), 0),
+            valorMesAtual: aprovados
               .filter((p: any) => {
-                if (p.status !== 'aprovado') return false;
                 const dataAprovacao = new Date(p.data_aprovacao || p.created_at);
                 return dataAprovacao.getMonth() === mesAtual && dataAprovacao.getFullYear() === anoAtual;
               })
@@ -270,7 +280,84 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Linha 3: Status Especiais e Alertas */}
+            {/* Linha 3: Alertas de Pagamentos */}
+            {paymentStats && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                {/* Pagamentos Pendentes (não aprovados) */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Não Aprovados</p>
+                      <p className="mt-2 text-4xl font-bold text-yellow-600">
+                        {paymentStats.pendentes}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <a href="/pagamentos-new?tab=gerenciar&filter=pendente" className="text-yellow-600 hover:underline">
+                          Ver pagamentos →
+                        </a>
+                      </p>
+                    </div>
+                    <AlertTriangle className="w-12 h-12 text-yellow-500 opacity-50" />
+                  </div>
+                </div>
+
+                {/* Aprovados sem Link */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Aprovados sem Link</p>
+                      <p className="mt-2 text-4xl font-bold text-orange-600">
+                        {paymentStats.aprovadosSemLink}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <a href="/pagamentos-new?tab=gerenciar&filter=sem_link" className="text-orange-600 hover:underline">
+                          Gerar links →
+                        </a>
+                      </p>
+                    </div>
+                    <LinkIcon className="w-12 h-12 text-orange-500 opacity-50" />
+                  </div>
+                </div>
+
+                {/* Aprovados sem Email */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Aprovados sem Email</p>
+                      <p className="mt-2 text-4xl font-bold text-purple-600">
+                        {paymentStats.aprovadosSemEmail}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <a href="/pagamentos-new?tab=gerenciar&filter=sem_email" className="text-purple-600 hover:underline">
+                          Enviar notificações →
+                        </a>
+                      </p>
+                    </div>
+                    <AlertTriangle className="w-12 h-12 text-purple-500 opacity-50" />
+                  </div>
+                </div>
+
+                {/* Aprovados sem Entrada no Sistema */}
+                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Sem Entrada no Sistema</p>
+                      <p className="mt-2 text-4xl font-bold text-red-600">
+                        {paymentStats.aprovadosSemMembro}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        <a href="/pagamentos-new?tab=gerenciar&filter=sem_membro" className="text-red-600 hover:underline">
+                          Ver detalhes →
+                        </a>
+                      </p>
+                    </div>
+                    <Users className="w-12 h-12 text-red-500 opacity-50" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Linha 4: Status Especiais e Alertas */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {/* Erro Remoção */}
               <div className="bg-white rounded-xl shadow p-6 border-l-4 border-orange-500">
