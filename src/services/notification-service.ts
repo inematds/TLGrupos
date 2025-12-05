@@ -658,3 +658,147 @@ Por favor, verifique os dados e tente novamente. Se precisar de ajuda, entre em 
 
   return result;
 }
+
+/**
+ * Envia broadcast (notícia/aviso) para membros
+ */
+export async function sendBroadcastNotification(params: {
+  subject: string;
+  message: string;
+  targetAudience: 'all' | 'active' | 'expiring' | 'expired';
+  sendEmail: boolean;
+  sendTelegram: boolean;
+}): Promise<{
+  success: boolean;
+  totalMembers: number;
+  emailsSent: number;
+  telegramsSent: number;
+  errors: Array<{ memberId: string; error: string }>;
+}> {
+  const result = {
+    success: true,
+    totalMembers: 0,
+    emailsSent: 0,
+    telegramsSent: 0,
+    errors: [] as Array<{ memberId: string; error: string }>,
+  };
+
+  // Buscar membros de acordo com o público-alvo
+  let query = supabase.from('members').select('*');
+
+  switch (params.targetAudience) {
+    case 'active':
+      query = query.eq('status', 'ativo');
+      break;
+    case 'expiring':
+      // Membros que vencem nos próximos 30 dias
+      const in30Days = new Date();
+      in30Days.setDate(in30Days.getDate() + 30);
+      query = query
+        .eq('status', 'ativo')
+        .lte('data_vencimento', in30Days.toISOString());
+      break;
+    case 'expired':
+      query = query.in('status', ['expirado', 'removido']);
+      break;
+    case 'all':
+    default:
+      // Todos os membros
+      break;
+  }
+
+  const { data: members, error } = await query;
+
+  if (error) {
+    return {
+      ...result,
+      success: false,
+      errors: [{ memberId: 'query', error: error.message }],
+    };
+  }
+
+  if (!members || members.length === 0) {
+    return result;
+  }
+
+  result.totalMembers = members.length;
+
+  // Enviar para cada membro
+  for (const member of members) {
+    try {
+      // Criar registro de notificação
+      const notificationId = await createNotificationRecord({
+        memberId: member.id,
+        notificationType: 'broadcast',
+        subject: params.subject,
+        message: params.message,
+      });
+
+      // Enviar Email
+      if (params.sendEmail && member.email) {
+        try {
+          const emailSent = await sendEmail({
+            to: member.email,
+            subject: params.subject,
+            text: params.message.replace(/\*/g, ''),
+            html: params.message
+              .replace(/\n/g, '<br>')
+              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+          });
+
+          if (emailSent) {
+            result.emailsSent++;
+          }
+
+          await updateEmailStatus(notificationId, emailSent);
+        } catch (error: any) {
+          await updateEmailStatus(notificationId, false, error.message);
+        }
+      }
+
+      // Enviar Telegram
+      if (params.sendTelegram && member.telegram_user_id) {
+        try {
+          const telegramResult = await sendPrivateMessage(
+            member.telegram_user_id,
+            params.message
+          );
+
+          if (telegramResult.success) {
+            result.telegramsSent++;
+          }
+
+          await updateTelegramStatus(
+            notificationId,
+            telegramResult.success,
+            telegramResult.error
+          );
+        } catch (error: any) {
+          await updateTelegramStatus(notificationId, false, error.message);
+        }
+      }
+
+      // Log
+      await supabase.from('logs').insert({
+        member_id: member.id,
+        acao: 'notificacao',
+        detalhes: {
+          tipo: 'broadcast',
+          notification_id: notificationId,
+          subject: params.subject,
+          target_audience: params.targetAudience,
+        },
+        telegram_user_id: member.telegram_user_id,
+        telegram_username: member.telegram_username,
+        executado_por: 'Admin (Broadcast)',
+      });
+    } catch (error: any) {
+      result.errors.push({
+        memberId: member.id,
+        error: error.message,
+      });
+    }
+  }
+
+  return result;
+}
