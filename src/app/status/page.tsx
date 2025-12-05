@@ -115,23 +115,19 @@ export default function StatusPage() {
         });
       }
 
-      // 5. Verificar variáveis de ambiente (client-side check)
-      const envVars = [
-        { name: 'SUPABASE_URL', value: process.env.NEXT_PUBLIC_SUPABASE_URL },
-      ];
-
-      const missingEnv = envVars.filter(v => !v.value);
-      if (missingEnv.length === 0) {
+      // 5. Verificar configuração do sistema (via API)
+      const configRes = await fetch('/api/config');
+      if (configRes.ok) {
         results.push({
-          name: 'Variáveis de Ambiente',
+          name: 'Configuração do Sistema',
           status: 'success',
-          message: 'Configurações OK'
+          message: 'Variáveis de ambiente OK'
         });
       } else {
         results.push({
-          name: 'Variáveis de Ambiente',
-          status: 'error',
-          message: `${missingEnv.length} variáveis não configuradas`
+          name: 'Configuração do Sistema',
+          status: 'warning',
+          message: 'Não foi possível verificar configurações'
         });
       }
 
