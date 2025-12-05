@@ -334,6 +334,97 @@ export default function GerenciarPagamentos() {
     }
   };
 
+  const handleUpdatePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedPayment) return;
+
+    // Validações
+    if (!formData.member_id) {
+      alert('❌ Erro: Selecione um membro');
+      return;
+    }
+
+    if (!formData.valor || parseFloat(formData.valor) <= 0) {
+      alert('❌ Erro: Informe um valor válido maior que zero');
+      return;
+    }
+
+    if (!formData.dias_acesso || parseInt(formData.dias_acesso) <= 0) {
+      alert('❌ Erro: Informe os dias de acesso (deve ser maior que zero)');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+
+      const payload = {
+        id: selectedPayment.id,
+        member_id: formData.member_id,
+        plan_id: formData.plan_id || null,
+        payment_method_id: formData.payment_method_id || null,
+        valor: parseFloat(formData.valor),
+        dias_acesso: parseInt(formData.dias_acesso),
+        descricao: formData.descricao || '',
+        observacoes: formData.observacoes || '',
+        comprovante_url: formData.comprovante_url || null,
+        pix_chave: formData.pix_chave || null,
+      };
+
+      console.log('Atualizando pagamento:', payload);
+
+      const response = await fetch(`/api/payments?id=${selectedPayment.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('✅ Pagamento atualizado com sucesso!');
+        setEditMode(false);
+        setShowModal(false);
+        setSelectedPayment(null);
+        setFormData({
+          member_id: '',
+          plan_id: '',
+          payment_method_id: '',
+          valor: '',
+          dias_acesso: '30',
+          descricao: '',
+          observacoes: '',
+          comprovante_url: '',
+          pix_chave: '',
+        });
+        loadPayments();
+      } else {
+        console.error('Erro na resposta:', data);
+        alert('❌ Erro ao atualizar pagamento:\n' + (data.error || 'Erro desconhecido'));
+      }
+    } catch (error: any) {
+      console.error('Erro ao atualizar pagamento:', error);
+      alert('❌ Erro ao atualizar pagamento:\n' + error.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const startEditPayment = (payment: Payment) => {
+    setFormData({
+      member_id: payment.member_id,
+      plan_id: payment.plan_id || '',
+      payment_method_id: payment.payment_method_id || '',
+      valor: payment.valor.toString(),
+      dias_acesso: payment.dias_acesso.toString(),
+      descricao: payment.descricao || '',
+      observacoes: payment.observacoes || '',
+      comprovante_url: payment.comprovante_url || '',
+      pix_chave: payment.pix_chave || '',
+    });
+    setEditMode(true);
+  };
+
   const handlePlanChange = (planId: string) => {
     const plan = plans.find(p => p.id === planId);
     if (plan) {
@@ -587,16 +678,29 @@ export default function GerenciarPagamentos() {
                         {new Date(payment.created_at).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            setSelectedPayment(payment);
-                            setShowModal(true);
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                          <Eye className="w-4 h-4" />
-                          Ver
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedPayment(payment);
+                              setShowModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                          >
+                            <Eye className="w-4 h-4" />
+                            Ver
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedPayment(payment);
+                              startEditPayment(payment);
+                              setShowModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                          >
+                            <Edit className="w-4 h-4" />
+                            Editar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -612,11 +716,14 @@ export default function GerenciarPagamentos() {
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Header do Modal */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">Detalhes do Pagamento</h3>
+              <h3 className="text-xl font-bold text-gray-900">
+                {editMode ? 'Editar Pagamento' : 'Detalhes do Pagamento'}
+              </h3>
               <button
                 onClick={() => {
                   setShowModal(false);
                   setSelectedPayment(null);
+                  setEditMode(false);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -625,7 +732,175 @@ export default function GerenciarPagamentos() {
             </div>
 
             {/* Conteúdo do Modal */}
-            <div className="p-6 space-y-6">
+            {editMode ? (
+              // Modo de Edição - Formulário
+              <form onSubmit={handleUpdatePayment} className="p-6 space-y-6">
+                {/* Membro */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Membro *
+                  </label>
+                  <select
+                    value={formData.member_id}
+                    onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="">Selecione um membro</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.nome} - @{member.telegram_username}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Plano */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Plano (opcional)
+                  </label>
+                  <select
+                    value={formData.plan_id}
+                    onChange={(e) => handlePlanChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Sem plano específico</option>
+                    {plans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Forma de Pagamento */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Forma de Pagamento
+                  </label>
+                  <select
+                    value={formData.payment_method_id}
+                    onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Selecione uma forma</option>
+                    {formasPagamento.filter(f => f.ativo).map((forma) => (
+                      <option key={forma.id} value={forma.id}>
+                        {forma.nome}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Valor e Dias */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Valor (R$) *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={formData.valor}
+                      onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dias de Acesso *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.dias_acesso}
+                      onChange={(e) => setFormData({ ...formData, dias_acesso: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Descrição */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Descrição
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: Pagamento mensal"
+                  />
+                </div>
+
+                {/* Observações */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Observações
+                  </label>
+                  <textarea
+                    value={formData.observacoes}
+                    onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Observações adicionais..."
+                  />
+                </div>
+
+                {/* Comprovante URL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL do Comprovante
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.comprovante_url}
+                    onChange={(e) => setFormData({ ...formData, comprovante_url: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                {/* Chave PIX */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Chave PIX Utilizada
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.pix_chave}
+                    onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="email@exemplo.com"
+                  />
+                </div>
+
+                {/* Botões do Formulário */}
+                <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setEditMode(false)}
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    {actionLoading ? 'Salvando...' : 'Salvar Alterações'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              // Modo de Visualização
+              <>
+                <div className="p-6 space-y-6">
               {/* Status */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Status</label>
@@ -764,6 +1039,7 @@ export default function GerenciarPagamentos() {
                 onClick={() => {
                   setShowModal(false);
                   setSelectedPayment(null);
+                  setEditMode(false);
                 }}
                 className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -771,6 +1047,15 @@ export default function GerenciarPagamentos() {
               </button>
 
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => startEditPayment(selectedPayment)}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Editar
+                </button>
+
                 {selectedPayment.status === 'pendente' && (
                   <>
                     <button
@@ -802,6 +1087,8 @@ export default function GerenciarPagamentos() {
                 </button>
               </div>
             </div>
+            </>
+            )}
           </div>
         </div>
       )}
