@@ -476,23 +476,14 @@ export default function GerenciarPagamentos() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Gerenciar Pagamentos
-            </h2>
-            <p className="text-gray-600">
-              Aprove, rejeite ou visualize todos os pagamentos do sistema
-            </p>
-          </div>
-          <button
-            onClick={() => setShowFormModal(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium shadow-sm"
-          >
-            <Plus className="w-5 h-5" />
-            Novo Pagamento
-          </button>
-        </div>
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Gerenciar Pagamentos
+        </h2>
+        <p className="text-gray-600">
+          Aprove, rejeite ou visualize todos os pagamentos do sistema
+        </p>
+      </div>
 
         {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
