@@ -209,149 +209,132 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Linha 2: Estatísticas de Pagamentos */}
+            {/* Seção: Situação de Pagamentos */}
             {paymentStats && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                {/* Receita Total */}
-                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium opacity-90">Receita Total</p>
-                      <p className="mt-2 text-3xl font-bold">
-                        R$ {paymentStats.valorTotal.toFixed(2)}
-                      </p>
-                      <p className="text-xs opacity-75 mt-1">
-                        {paymentStats.aprovados} pagamentos aprovados
-                      </p>
+              <div className="mb-8">
+                {/* Título da Seção */}
+                <div className="mb-4 flex items-center gap-3">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <h2 className="text-2xl font-bold text-gray-900">Situação de Pagamentos</h2>
+                </div>
+
+                {/* Linha 1: Receita e Totais */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                  {/* Receita Total */}
+                  <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium opacity-90">Receita Total</p>
+                        <p className="mt-2 text-3xl font-bold">
+                          R$ {paymentStats.valorTotal.toFixed(2)}
+                        </p>
+                        <p className="text-xs opacity-75 mt-1">
+                          {paymentStats.aprovados} pagamentos aprovados
+                        </p>
+                      </div>
+                      <DollarSign className="w-12 h-12 opacity-80" />
                     </div>
-                    <DollarSign className="w-12 h-12 opacity-80" />
+                  </div>
+
+                  {/* Receita do Mês */}
+                  <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium opacity-90">Receita do Mês</p>
+                        <p className="mt-2 text-3xl font-bold">
+                          R$ {paymentStats.valorMesAtual.toFixed(2)}
+                        </p>
+                        <p className="text-xs opacity-75 mt-1">
+                          {new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <TrendingUp className="w-12 h-12 opacity-80" />
+                    </div>
+                  </div>
+
+                  {/* Total de Pagamentos */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Total Pagamentos</p>
+                        <p className="mt-2 text-4xl font-bold text-blue-600">
+                          {paymentStats.total}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Todos os registros
+                        </p>
+                      </div>
+                      <DollarSign className="w-12 h-12 text-blue-500 opacity-50" />
+                    </div>
+                  </div>
+
+                  {/* Pagamentos Aprovados */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Aprovados</p>
+                        <p className="mt-2 text-4xl font-bold text-green-600">
+                          {paymentStats.aprovados}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Pagamentos confirmados
+                        </p>
+                      </div>
+                      <CheckCircle className="w-12 h-12 text-green-500 opacity-50" />
+                    </div>
                   </div>
                 </div>
 
-                {/* Receita do Mês */}
-                <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium opacity-90">Receita do Mês</p>
-                      <p className="mt-2 text-3xl font-bold">
-                        R$ {paymentStats.valorMesAtual.toFixed(2)}
-                      </p>
-                      <p className="text-xs opacity-75 mt-1">
-                        {new Date().toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
-                      </p>
-                    </div>
-                    <TrendingUp className="w-12 h-12 opacity-80" />
-                  </div>
-                </div>
-
-                {/* Pagamentos Pendentes */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Pendentes</p>
-                      <p className="mt-2 text-4xl font-bold text-yellow-600">
+                {/* Linha 2: Alertas e Pendências */}
+                <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border-2 border-red-200 mb-6">
+                  <h3 className="text-lg font-semibold text-red-800 mb-4 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    Requerem Atenção
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    {/* Não Aprovados */}
+                    <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Não Aprovados</p>
+                      <p className="mt-2 text-3xl font-bold text-yellow-600">
                         {paymentStats.pendentes}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        <a href="/dashboard/pagamentos-gerenciar" className="text-yellow-600 hover:underline">
-                          Aguardando aprovação →
-                        </a>
-                      </p>
+                      <a href="/pagamentos-new?tab=gerenciar&filter=pendente" className="mt-2 text-xs text-yellow-600 hover:underline inline-block">
+                        Ver pagamentos →
+                      </a>
                     </div>
-                    <Clock className="w-12 h-12 text-yellow-500 opacity-50" />
-                  </div>
-                </div>
 
-                {/* Total de Pagamentos */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Total Pagamentos</p>
-                      <p className="mt-2 text-4xl font-bold text-blue-600">
-                        {paymentStats.total}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Todos os registros
-                      </p>
-                    </div>
-                    <DollarSign className="w-12 h-12 text-blue-500 opacity-50" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Linha 3: Alertas de Pagamentos */}
-            {paymentStats && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                {/* Pagamentos Pendentes (não aprovados) */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-yellow-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Não Aprovados</p>
-                      <p className="mt-2 text-4xl font-bold text-yellow-600">
-                        {paymentStats.pendentes}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        <a href="/pagamentos-new?tab=gerenciar&filter=pendente" className="text-yellow-600 hover:underline">
-                          Ver pagamentos →
-                        </a>
-                      </p>
-                    </div>
-                    <AlertTriangle className="w-12 h-12 text-yellow-500 opacity-50" />
-                  </div>
-                </div>
-
-                {/* Aprovados sem Link */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Aprovados sem Link</p>
-                      <p className="mt-2 text-4xl font-bold text-orange-600">
+                    {/* Aprovados sem Link */}
+                    <div className="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Sem Link de Convite</p>
+                      <p className="mt-2 text-3xl font-bold text-orange-600">
                         {paymentStats.aprovadosSemLink}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        <a href="/pagamentos-new?tab=gerenciar&filter=sem_link" className="text-orange-600 hover:underline">
-                          Gerar links →
-                        </a>
-                      </p>
+                      <a href="/pagamentos-new?tab=gerenciar&filter=sem_link" className="mt-2 text-xs text-orange-600 hover:underline inline-block">
+                        Gerar links →
+                      </a>
                     </div>
-                    <LinkIcon className="w-12 h-12 text-orange-500 opacity-50" />
-                  </div>
-                </div>
 
-                {/* Aprovados sem Email */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Aprovados sem Email</p>
-                      <p className="mt-2 text-4xl font-bold text-purple-600">
+                    {/* Aprovados sem Email */}
+                    <div className="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Sem Notificação</p>
+                      <p className="mt-2 text-3xl font-bold text-purple-600">
                         {paymentStats.aprovadosSemEmail}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        <a href="/pagamentos-new?tab=gerenciar&filter=sem_email" className="text-purple-600 hover:underline">
-                          Enviar notificações →
-                        </a>
-                      </p>
+                      <a href="/pagamentos-new?tab=gerenciar&filter=sem_email" className="mt-2 text-xs text-purple-600 hover:underline inline-block">
+                        Enviar notificações →
+                      </a>
                     </div>
-                    <AlertTriangle className="w-12 h-12 text-purple-500 opacity-50" />
-                  </div>
-                </div>
 
-                {/* Aprovados sem Entrada no Sistema */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-500">Sem Entrada no Sistema</p>
-                      <p className="mt-2 text-4xl font-bold text-red-600">
+                    {/* Sem Entrada no Sistema */}
+                    <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Sem Entrada</p>
+                      <p className="mt-2 text-3xl font-bold text-red-600">
                         {paymentStats.aprovadosSemMembro}
                       </p>
-                      <p className="text-xs text-gray-500 mt-2">
-                        <a href="/pagamentos-new?tab=gerenciar&filter=sem_membro" className="text-red-600 hover:underline">
-                          Ver detalhes →
-                        </a>
-                      </p>
+                      <a href="/pagamentos-new?tab=gerenciar&filter=sem_membro" className="mt-2 text-xs text-red-600 hover:underline inline-block">
+                        Ver detalhes →
+                      </a>
                     </div>
-                    <Users className="w-12 h-12 text-red-500 opacity-50" />
                   </div>
                 </div>
               </div>
