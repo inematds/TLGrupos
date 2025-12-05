@@ -52,8 +52,8 @@ export default function SettingsPage() {
   const [botWebhookUrl, setBotWebhookUrl] = useState('');
   const [botGrupoPrincipal, setBotGrupoPrincipal] = useState('-1002242190548');
   const [telegramGroups, setTelegramGroups] = useState<any[]>([]);
-  const [botAutoCadastroEntrar, setBotAutoCadastroEntrar] = useState(false);
-  const [botAutoCadastroMensagem, setBotAutoCadastroMensagem] = useState(false);
+  const [botAutoCadastroEntrar, setBotAutoCadastroEntrar] = useState(true);
+  const [botAutoCadastroMensagem, setBotAutoCadastroMensagem] = useState(true);
   const [botComandoRegistrar, setBotComandoRegistrar] = useState(true);
   const [botMensagemBoasVindas, setBotMensagemBoasVindas] = useState('');
 
@@ -151,6 +151,22 @@ export default function SettingsPage() {
         if (botMensagemBoasVindasConfig) setBotMensagemBoasVindas(botMensagemBoasVindasConfig.valor);
         if (botRemocaoAutomaticaConfig) setBotRemocaoAutomatica(botRemocaoAutomaticaConfig.valor === 'true');
         if (botHorarioRemocaoConfig) setBotHorarioRemocao(botHorarioRemocaoConfig.valor);
+
+        // Log das configs de bot carregadas
+        console.log('📥 [Configurações] Auto-cadastro carregado do banco:', {
+          botAutoCadastroEntrar: {
+            raw: botAutoCadastroEntrarConfig?.valor,
+            converted: botAutoCadastroEntrarConfig?.valor === 'true',
+          },
+          botAutoCadastroMensagem: {
+            raw: botAutoCadastroMensagemConfig?.valor,
+            converted: botAutoCadastroMensagemConfig?.valor === 'true',
+          },
+          botComandoRegistrar: {
+            raw: botComandoRegistrarConfig?.valor,
+            converted: botComandoRegistrarConfig?.valor === 'true',
+          }
+        });
 
         // Notificações configs
         const notifVencimentoAtivoConfig = data.data.find((c: any) => c.chave === 'notif_vencimento_ativo');
