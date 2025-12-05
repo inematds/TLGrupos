@@ -901,193 +901,193 @@ export default function GerenciarPagamentos() {
               // Modo de Visualização
               <>
                 <div className="p-6 space-y-6">
-              {/* Status */}
-              <div>
-                <label className="text-sm font-medium text-gray-700">Status</label>
-                <div className="mt-1">
-                  {getStatusBadge(selectedPayment.status)}
-                </div>
-              </div>
+                  {/* Status */}
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <div className="mt-1">
+                      {getStatusBadge(selectedPayment.status)}
+                    </div>
+                  </div>
 
-              {/* Informações do Membro */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  Membro
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Nome:</span> {selectedPayment.member?.nome}</p>
-                  {selectedPayment.member?.email && (
-                    <p><span className="font-medium">Email:</span> {selectedPayment.member.email}</p>
+                  {/* Informações do Membro */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Membro
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="font-medium">Nome:</span> {selectedPayment.member?.nome}</p>
+                      {selectedPayment.member?.email && (
+                        <p><span className="font-medium">Email:</span> {selectedPayment.member.email}</p>
+                      )}
+                      {selectedPayment.member?.telegram_username && (
+                        <p><span className="font-medium">Telegram:</span> @{selectedPayment.member.telegram_username}</p>
+                      )}
+                      {selectedPayment.member?.telefone && (
+                        <p><span className="font-medium">Telefone:</span> {selectedPayment.member.telefone}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Informações do Pagamento */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Valor</label>
+                      <p className="mt-1 text-lg font-semibold text-green-600">
+                        R$ {parseFloat(selectedPayment.valor.toString()).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Dias de Acesso</label>
+                      <p className="mt-1 text-lg font-semibold text-gray-900">
+                        {selectedPayment.dias_acesso} dias
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Plano */}
+                  {selectedPayment.plan && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Plano</label>
+                      <p className="mt-1 text-gray-900">{selectedPayment.plan.nome}</p>
+                    </div>
                   )}
-                  {selectedPayment.member?.telegram_username && (
-                    <p><span className="font-medium">Telegram:</span> @{selectedPayment.member.telegram_username}</p>
+
+                  {/* Descrição */}
+                  {selectedPayment.descricao && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Descrição</label>
+                      <p className="mt-1 text-gray-900">{selectedPayment.descricao}</p>
+                    </div>
                   )}
-                  {selectedPayment.member?.telefone && (
-                    <p><span className="font-medium">Telefone:</span> {selectedPayment.member.telefone}</p>
+
+                  {/* Observações */}
+                  {selectedPayment.observacoes && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Observações</label>
+                      <p className="mt-1 text-gray-900 whitespace-pre-wrap">{selectedPayment.observacoes}</p>
+                    </div>
                   )}
-                </div>
-              </div>
 
-              {/* Informações do Pagamento */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Valor</label>
-                  <p className="mt-1 text-lg font-semibold text-green-600">
-                    R$ {parseFloat(selectedPayment.valor.toString()).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Dias de Acesso</label>
-                  <p className="mt-1 text-lg font-semibold text-gray-900">
-                    {selectedPayment.dias_acesso} dias
-                  </p>
-                </div>
-              </div>
+                  {/* Comprovante */}
+                  {selectedPayment.comprovante_url && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-2 block">Comprovante</label>
+                      <img
+                        src={selectedPayment.comprovante_url}
+                        alt="Comprovante"
+                        className="w-full max-w-md rounded-lg border border-gray-200"
+                      />
+                    </div>
+                  )}
 
-              {/* Plano */}
-              {selectedPayment.plan && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Plano</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.plan.nome}</p>
-                </div>
-              )}
+                  {/* Datas */}
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Data do Pagamento</label>
+                      <p className="mt-1 text-gray-900">
+                        {new Date(selectedPayment.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Data de Vencimento</label>
+                      <p className="mt-1 text-gray-900">
+                        {(() => {
+                          const match = selectedPayment.observacoes?.match(/Data de Vencimento Prevista: (\d{2}\/\d{2}\/\d{4})/);
+                          if (match) return match[1];
+                          const dataVenc = new Date();
+                          dataVenc.setDate(dataVenc.getDate() + (selectedPayment.dias_acesso || 30));
+                          return dataVenc.toLocaleDateString('pt-BR');
+                        })()}
+                      </p>
+                    </div>
+                  </div>
 
-              {/* Descrição */}
-              {selectedPayment.descricao && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Descrição</label>
-                  <p className="mt-1 text-gray-900">{selectedPayment.descricao}</p>
-                </div>
-              )}
+                  {/* Informações de Aprovação/Rejeição */}
+                  {selectedPayment.status === 'aprovado' && selectedPayment.approved_by && (
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <p className="text-sm text-green-800">
+                        <span className="font-medium">Aprovado por:</span> {selectedPayment.approved_by}
+                      </p>
+                      {selectedPayment.approved_at && (
+                        <p className="text-sm text-green-800 mt-1">
+                          <span className="font-medium">Data:</span> {new Date(selectedPayment.approved_at).toLocaleString('pt-BR')}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-              {/* Observações */}
-              {selectedPayment.observacoes && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Observações</label>
-                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{selectedPayment.observacoes}</p>
-                </div>
-              )}
-
-              {/* Comprovante */}
-              {selectedPayment.comprovante_url && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Comprovante</label>
-                  <img
-                    src={selectedPayment.comprovante_url}
-                    alt="Comprovante"
-                    className="w-full max-w-md rounded-lg border border-gray-200"
-                  />
-                </div>
-              )}
-
-              {/* Datas */}
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Data do Pagamento</label>
-                  <p className="mt-1 text-gray-900">
-                    {new Date(selectedPayment.created_at).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Data de Vencimento</label>
-                  <p className="mt-1 text-gray-900">
-                    {(() => {
-                      const match = selectedPayment.observacoes?.match(/Data de Vencimento Prevista: (\d{2}\/\d{2}\/\d{4})/);
-                      if (match) return match[1];
-                      const dataVenc = new Date();
-                      dataVenc.setDate(dataVenc.getDate() + (selectedPayment.dias_acesso || 30));
-                      return dataVenc.toLocaleDateString('pt-BR');
-                    })()}
-                  </p>
-                </div>
-              </div>
-
-              {/* Informações de Aprovação/Rejeição */}
-              {selectedPayment.status === 'aprovado' && selectedPayment.approved_by && (
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <span className="font-medium">Aprovado por:</span> {selectedPayment.approved_by}
-                  </p>
-                  {selectedPayment.approved_at && (
-                    <p className="text-sm text-green-800 mt-1">
-                      <span className="font-medium">Data:</span> {new Date(selectedPayment.approved_at).toLocaleString('pt-BR')}
-                    </p>
+                  {selectedPayment.status === 'rejeitado' && (
+                    <div className="bg-red-50 p-4 rounded-lg">
+                      {selectedPayment.rejected_by && (
+                        <p className="text-sm text-red-800">
+                          <span className="font-medium">Rejeitado por:</span> {selectedPayment.rejected_by}
+                        </p>
+                      )}
+                      {selectedPayment.motivo_rejeicao && (
+                        <p className="text-sm text-red-800 mt-1">
+                          <span className="font-medium">Motivo:</span> {selectedPayment.motivo_rejeicao}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
 
-              {selectedPayment.status === 'rejeitado' && (
-                <div className="bg-red-50 p-4 rounded-lg">
-                  {selectedPayment.rejected_by && (
-                    <p className="text-sm text-red-800">
-                      <span className="font-medium">Rejeitado por:</span> {selectedPayment.rejected_by}
-                    </p>
-                  )}
-                  {selectedPayment.motivo_rejeicao && (
-                    <p className="text-sm text-red-800 mt-1">
-                      <span className="font-medium">Motivo:</span> {selectedPayment.motivo_rejeicao}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+                {/* Footer com Ações */}
+                <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setSelectedPayment(null);
+                      setEditMode(false);
+                    }}
+                    className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Fechar
+                  </button>
 
-            {/* Footer com Ações */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setShowModal(false);
-                  setSelectedPayment(null);
-                  setEditMode(false);
-                }}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Fechar
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => startEditPayment(selectedPayment)}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <Edit className="w-4 h-4" />
-                  Editar
-                </button>
-
-                {selectedPayment.status === 'pendente' && (
-                  <>
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => {
-                        setShowRejectModal(true);
-                      }}
+                      onClick={() => startEditPayment(selectedPayment)}
                       disabled={actionLoading}
-                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                     >
-                      Rejeitar
+                      <Edit className="w-4 h-4" />
+                      Editar
                     </button>
-                    <button
-                      onClick={() => handleApprove(selectedPayment)}
-                      disabled={actionLoading}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {actionLoading ? 'Aprovando...' : 'Aprovar'}
-                    </button>
-                  </>
-                )}
 
-                <button
-                  onClick={() => handleDelete(selectedPayment)}
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Excluir
-                </button>
-              </div>
-            </div>
-            </>
+                    {selectedPayment.status === 'pendente' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setShowRejectModal(true);
+                          }}
+                          disabled={actionLoading}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                        >
+                          Rejeitar
+                        </button>
+                        <button
+                          onClick={() => handleApprove(selectedPayment)}
+                          disabled={actionLoading}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {actionLoading ? 'Aprovando...' : 'Aprovar'}
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      onClick={() => handleDelete(selectedPayment)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
