@@ -156,8 +156,10 @@ export default function HomePage() {
                   <code>{`# Conectar na VPS
 ssh seu-usuario@seu-ip
 
-# Clonar o projeto
-git clone https://github.com/inematds/TLGrupos.git
+# Criar diretório e clonar o projeto
+sudo mkdir -p /var/www
+cd /var/www
+sudo git clone https://github.com/inematds/TLGrupos.git
 cd TLGrupos`}</code>
                 </pre>
               </div>
@@ -282,7 +284,7 @@ pm2 save`}</code>
               <h3 className="text-xl font-bold text-gray-900 mb-4">🔄 Como Atualizar o Sistema</h3>
               <p className="text-gray-700 mb-3">Sempre que houver atualizações no GitHub:</p>
               <pre className="bg-gray-900 text-cyan-400 p-4 rounded-lg overflow-x-auto">
-                <code>{`cd TLGrupos
+                <code>{`cd /var/www/TLGrupos
 git pull origin main
 npm install
 ./prod-restart.sh`}</code>
