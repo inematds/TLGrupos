@@ -473,6 +473,24 @@ export async function sendPaymentApprovedNotification(
   const alreadySent = await checkNotificationSent(memberId, 'payment_approved');
   if (alreadySent.alreadySent) {
     console.log(`[Notification] Pagamento aprovado já notificado para membro ${memberId}`);
+
+    // IMPORTANTE: Mesmo que já tenha enviado, atualizar campos no payment se necessário
+    if (paymentId) {
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({
+          email_sent: alreadySent.emailSent,
+          notification_sent: alreadySent.telegramSent,
+        })
+        .eq('id', paymentId);
+
+      if (updateError) {
+        console.error('[Notification] Erro ao atualizar status do pagamento (já enviado):', updateError);
+      } else {
+        console.log(`[Notification] Status atualizado no pagamento ${paymentId} (retroativo): email=${alreadySent.emailSent}, telegram=${alreadySent.telegramSent}`);
+      }
+    }
+
     return { email: alreadySent.emailSent, telegram: alreadySent.telegramSent };
   }
 
@@ -570,6 +588,23 @@ Aproveite! 🚀`;
       telegram_username: member.telegram_username,
       executado_por: 'Sistema',
     });
+
+    // IMPORTANTE: Atualizar status de envio na tabela payments
+    if (paymentId) {
+      const { error: updateError } = await supabase
+        .from('payments')
+        .update({
+          email_sent: result.email,
+          notification_sent: result.telegram,
+        })
+        .eq('id', paymentId);
+
+      if (updateError) {
+        console.error('[Notification] Erro ao atualizar status do pagamento:', updateError);
+      } else {
+        console.log(`[Notification] Status atualizado no pagamento ${paymentId}: email=${result.email}, telegram=${result.telegram}`);
+      }
+    }
   } catch (error: any) {
     console.error('[Notification] Erro ao processar notificação:', error);
   }
