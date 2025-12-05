@@ -1,6 +1,17 @@
 # 🤖 Configuração de Cron Jobs na VPS
 
-Este guia mostra como configurar os processos automáticos diretamente na VPS, sem depender de serviços externos.
+Este guia mostra como configurar **TODOS os 4 processos automáticos** diretamente na VPS, sem depender de serviços externos.
+
+---
+
+## 🎯 Processos Automáticos
+
+| # | Processo | Frequência | Horário | Endpoint |
+|---|----------|------------|---------|----------|
+| 1️⃣ | **Processar Pagamentos sem Link** | A cada 15min | - | `/api/cron/process-approved-payments` |
+| 2️⃣ | **Verificar Expirações** | A cada 1 hora | - | `/api/cron/check-expirations` |
+| 3️⃣ | **Enviar Notificações** | 1x por dia | 08:00 | `/api/cron/send-notifications` |
+| 4️⃣ | **Remover Expirados** | 1x por dia | 03:00 🌙 | `/api/cron/remove-expired` |
 
 ---
 
@@ -8,11 +19,26 @@ Este guia mostra como configurar os processos automáticos diretamente na VPS, s
 
 1. Acesso SSH à VPS
 2. PM2 rodando o TLGrupos
-3. Variável `CRON_SECRET` no `.env.local`
+3. Acesso root ou sudo
 
 ---
 
-## 🔧 Instalação
+## 🚀 Instalação Rápida (Recomendado)
+
+### Configurar TUDO de uma vez com 1 comando:
+
+```bash
+# Na VPS:
+cd /var/www/TLGrupos
+chmod +x setup-all-crons.sh
+sudo ./setup-all-crons.sh
+```
+
+✅ **Pronto!** Todos os 4 processos estarão configurados e rodando.
+
+---
+
+## 🔧 Instalação Manual (Passo a Passo)
 
 ### 1️⃣ Verificar/Criar CRON_SECRET
 
