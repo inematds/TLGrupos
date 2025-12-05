@@ -239,6 +239,12 @@ export default function SettingsPage() {
         { chave: 'notif_texto_noticias', valor: notifTextoNoticias },
       ];
 
+      console.log('💾 [Configurações] Salvando configs:', {
+        notifNoticiasAtivo,
+        notifNoticiasTelegram,
+        notifNoticiasEmail,
+      });
+
       const promises = configs.map(config =>
         fetch('/api/config', {
           method: 'PUT',
@@ -251,11 +257,27 @@ export default function SettingsPage() {
       const allOk = responses.every(r => r.ok);
 
       if (allOk) {
+        console.log('✅ [Configurações] Todas configurações salvas com sucesso!');
         setMessage({ text: 'Configurações salvas com sucesso!', type: 'success' });
+        // Recarregar configurações para confirmar que foram salvas
+        await loadConfigs();
       } else {
+        // Identificar quais falharam
+        const failedResponses = await Promise.all(
+          responses.map(async (r, i) => {
+            if (!r.ok) {
+              const error = await r.json();
+              return { config: configs[i], error };
+            }
+            return null;
+          })
+        );
+        const failures = failedResponses.filter(f => f !== null);
+        console.error('❌ [Configurações] Erros ao salvar:', failures);
         throw new Error('Erro ao salvar algumas configurações');
       }
     } catch (error: any) {
+      console.error('❌ [Configurações] Erro geral ao salvar:', error);
       setMessage({ text: error.message || 'Erro ao salvar', type: 'error' });
     } finally {
       setLoading(false);
