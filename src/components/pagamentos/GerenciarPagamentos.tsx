@@ -606,7 +606,430 @@ export default function GerenciarPagamentos() {
           )}
         </div>
 
-      {/* Modais serão adicionados na próxima parte devido ao limite de tamanho */}
+      {/* Modal de Detalhes do Pagamento */}
+      {showModal && selectedPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header do Modal */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Detalhes do Pagamento</h3>
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setSelectedPayment(null);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Conteúdo do Modal */}
+            <div className="p-6 space-y-6">
+              {/* Status */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <div className="mt-1">
+                  {getStatusBadge(selectedPayment.status)}
+                </div>
+              </div>
+
+              {/* Informações do Membro */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Membro
+                </h4>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-medium">Nome:</span> {selectedPayment.member?.nome}</p>
+                  {selectedPayment.member?.email && (
+                    <p><span className="font-medium">Email:</span> {selectedPayment.member.email}</p>
+                  )}
+                  {selectedPayment.member?.telegram_username && (
+                    <p><span className="font-medium">Telegram:</span> @{selectedPayment.member.telegram_username}</p>
+                  )}
+                  {selectedPayment.member?.telefone && (
+                    <p><span className="font-medium">Telefone:</span> {selectedPayment.member.telefone}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Informações do Pagamento */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Valor</label>
+                  <p className="mt-1 text-lg font-semibold text-green-600">
+                    R$ {parseFloat(selectedPayment.valor.toString()).toFixed(2)}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Dias de Acesso</label>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">
+                    {selectedPayment.dias_acesso} dias
+                  </p>
+                </div>
+              </div>
+
+              {/* Plano */}
+              {selectedPayment.plan && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Plano</label>
+                  <p className="mt-1 text-gray-900">{selectedPayment.plan.nome}</p>
+                </div>
+              )}
+
+              {/* Descrição */}
+              {selectedPayment.descricao && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Descrição</label>
+                  <p className="mt-1 text-gray-900">{selectedPayment.descricao}</p>
+                </div>
+              )}
+
+              {/* Observações */}
+              {selectedPayment.observacoes && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Observações</label>
+                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{selectedPayment.observacoes}</p>
+                </div>
+              )}
+
+              {/* Comprovante */}
+              {selectedPayment.comprovante_url && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Comprovante</label>
+                  <img
+                    src={selectedPayment.comprovante_url}
+                    alt="Comprovante"
+                    className="w-full max-w-md rounded-lg border border-gray-200"
+                  />
+                </div>
+              )}
+
+              {/* Datas */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Data do Pagamento</label>
+                  <p className="mt-1 text-gray-900">
+                    {new Date(selectedPayment.created_at).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Data de Vencimento</label>
+                  <p className="mt-1 text-gray-900">
+                    {(() => {
+                      const match = selectedPayment.observacoes?.match(/Data de Vencimento Prevista: (\d{2}\/\d{2}\/\d{4})/);
+                      if (match) return match[1];
+                      const dataVenc = new Date();
+                      dataVenc.setDate(dataVenc.getDate() + (selectedPayment.dias_acesso || 30));
+                      return dataVenc.toLocaleDateString('pt-BR');
+                    })()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Informações de Aprovação/Rejeição */}
+              {selectedPayment.status === 'aprovado' && selectedPayment.approved_by && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    <span className="font-medium">Aprovado por:</span> {selectedPayment.approved_by}
+                  </p>
+                  {selectedPayment.approved_at && (
+                    <p className="text-sm text-green-800 mt-1">
+                      <span className="font-medium">Data:</span> {new Date(selectedPayment.approved_at).toLocaleString('pt-BR')}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {selectedPayment.status === 'rejeitado' && (
+                <div className="bg-red-50 p-4 rounded-lg">
+                  {selectedPayment.rejected_by && (
+                    <p className="text-sm text-red-800">
+                      <span className="font-medium">Rejeitado por:</span> {selectedPayment.rejected_by}
+                    </p>
+                  )}
+                  {selectedPayment.motivo_rejeicao && (
+                    <p className="text-sm text-red-800 mt-1">
+                      <span className="font-medium">Motivo:</span> {selectedPayment.motivo_rejeicao}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer com Ações */}
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setSelectedPayment(null);
+                }}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Fechar
+              </button>
+
+              <div className="flex items-center gap-2">
+                {selectedPayment.status === 'pendente' && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setShowRejectModal(true);
+                      }}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Rejeitar
+                    </button>
+                    <button
+                      onClick={() => handleApprove(selectedPayment)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {actionLoading ? 'Aprovando...' : 'Aprovar'}
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={() => handleDelete(selectedPayment)}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Rejeição */}
+      {showRejectModal && selectedPayment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Rejeitar Pagamento</h3>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-700 mb-4">
+                Informe o motivo da rejeição do pagamento de <strong>{selectedPayment.member?.nome}</strong>:
+              </p>
+
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Motivo da rejeição..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-2">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectReason('');
+                }}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={actionLoading || !rejectReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {actionLoading ? 'Rejeitando...' : 'Confirmar Rejeição'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Novo Pagamento */}
+      {showFormModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Novo Pagamento</h3>
+              <button
+                onClick={() => setShowFormModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitPayment} className="p-6 space-y-6">
+              {/* Membro */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Membro *
+                </label>
+                <select
+                  value={formData.member_id}
+                  onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  required
+                >
+                  <option value="">Selecione um membro</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.nome} - @{member.telegram_username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Plano */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Plano (opcional)
+                </label>
+                <select
+                  value={formData.plan_id}
+                  onChange={(e) => handlePlanChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Sem plano específico</option>
+                  {plans.map((plan) => (
+                    <option key={plan.id} value={plan.id}>
+                      {plan.nome} - R$ {plan.valor} ({plan.duracao_dias} dias)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Forma de Pagamento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Forma de Pagamento
+                </label>
+                <select
+                  value={formData.payment_method_id}
+                  onChange={(e) => setFormData({ ...formData, payment_method_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Selecione uma forma</option>
+                  {formasPagamento.filter(f => f.ativo).map((forma) => (
+                    <option key={forma.id} value={forma.id}>
+                      {forma.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Valor e Dias */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valor (R$) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.valor}
+                    onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Dias de Acesso *
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.dias_acesso}
+                    onChange={(e) => setFormData({ ...formData, dias_acesso: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Descrição */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descrição
+                </label>
+                <input
+                  type="text"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Ex: Pagamento mensal"
+                />
+              </div>
+
+              {/* Observações */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Observações
+                </label>
+                <textarea
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="Observações adicionais..."
+                />
+              </div>
+
+              {/* Comprovante URL */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  URL do Comprovante
+                </label>
+                <input
+                  type="url"
+                  value={formData.comprovante_url}
+                  onChange={(e) => setFormData({ ...formData, comprovante_url: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="https://..."
+                />
+              </div>
+
+              {/* Chave PIX */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chave PIX Utilizada
+                </label>
+                <input
+                  type="text"
+                  value={formData.pix_chave}
+                  onChange={(e) => setFormData({ ...formData, pix_chave: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+
+              {/* Botões */}
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowFormModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  <Save className="w-4 h-4" />
+                  {actionLoading ? 'Salvando...' : 'Salvar Pagamento'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
