@@ -26,15 +26,14 @@ export interface SendInviteLinkParams {
  */
 export async function sendEmail(params: SendEmailParams): Promise<boolean> {
   try {
-    // TODO: Implementar integração com provedor de email
-    // Por enquanto, vamos apenas logar e marcar como enviado
-
     const emailProvider = process.env.EMAIL_PROVIDER || 'resend';
 
     if (emailProvider === 'resend') {
       return await sendEmailResend(params);
     } else if (emailProvider === 'sendgrid') {
       return await sendEmailSendGrid(params);
+    } else if (emailProvider === 'smtp') {
+      return await sendEmailSMTP(params);
     } else {
       console.log('Email simulado (configure EMAIL_PROVIDER):', params);
       return true;
@@ -131,6 +130,53 @@ async function sendEmailSendGrid(params: SendEmailParams): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Erro ao enviar via SendGrid:', error);
+    return false;
+  }
+}
+
+/**
+ * Envia email usando SMTP (Gmail, Outlook, etc)
+ */
+async function sendEmailSMTP(params: SendEmailParams): Promise<boolean> {
+  const SMTP_HOST = process.env.SMTP_HOST;
+  const SMTP_PORT = process.env.SMTP_PORT;
+  const SMTP_USER = process.env.SMTP_USER;
+  const SMTP_PASS = process.env.SMTP_PASS;
+  const SMTP_FROM = process.env.SMTP_FROM || process.env.EMAIL_FROM;
+
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+    console.error('Configurações SMTP incompletas (SMTP_HOST, SMTP_USER, SMTP_PASS necessários)');
+    return false;
+  }
+
+  try {
+    // Importar nodemailer dinamicamente
+    const nodemailer = require('nodemailer');
+
+    // Criar transporter
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: parseInt(SMTP_PORT || '587'),
+      secure: SMTP_PORT === '465', // true para 465, false para outras portas
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+
+    // Enviar email
+    const info = await transporter.sendMail({
+      from: SMTP_FROM || `"TLGrupos" <${SMTP_USER}>`,
+      to: params.to,
+      subject: params.subject,
+      text: params.text,
+      html: params.html,
+    });
+
+    console.log(`[Email SMTP] Enviado com sucesso para ${params.to} - ID: ${info.messageId}`);
+    return true;
+  } catch (error: any) {
+    console.error('[Email SMTP] Erro ao enviar:', error.message);
     return false;
   }
 }
