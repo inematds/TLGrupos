@@ -11,7 +11,7 @@ const supabase = getServiceSupabase();
  */
 async function getActiveChannels(): Promise<{ email: boolean; telegram: boolean }> {
   const { data, error } = await supabase
-    .from('config')
+    .from('system_config')
     .select('chave, valor')
     .in('chave', ['notif_enviar_email', 'notif_enviar_telegram']);
 
@@ -37,7 +37,7 @@ async function getExpiryWarningsConfig(): Promise<{
   warnings: Array<{ number: number; days: number; active: boolean }>;
 }> {
   const { data, error } = await supabase
-    .from('config')
+    .from('system_config')
     .select('chave, valor')
     .in('chave', [
       'notif_vencimento_ativo',
@@ -207,7 +207,7 @@ async function updateTelegramStatus(
  */
 async function getMessageTemplate(key: string): Promise<string> {
   const { data, error } = await supabase
-    .from('config')
+    .from('system_config')
     .select('valor')
     .eq('chave', key)
     .single();
