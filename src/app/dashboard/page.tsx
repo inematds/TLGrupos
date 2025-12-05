@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { Member, Stats } from '@/types';
-import { DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle, Link as LinkIcon } from 'lucide-react';
+import { DollarSign, Users, AlertTriangle, TrendingUp, Clock, CheckCircle, Link as LinkIcon, PackageCheck } from 'lucide-react';
 import CronActivityChart from '@/components/CronActivityChart';
 
 interface PaymentStats {
   total: number;
   pendentes: number;
   aprovados: number;
+  entregues: number; // Pagamentos aprovados com link e notificação enviada
   valorTotal: number;
   valorMesAtual: number;
   aprovadosSemLink: number; // Pagamentos aprovados sem link de convite
@@ -61,10 +62,16 @@ export default function DashboardPage() {
 
           const aprovados = payments.filter((p: any) => p.status === 'aprovado');
 
+          // Pagamentos entregues = aprovados com link E notificação enviada
+          const entregues = aprovados.filter((p: any) => {
+            return p.invite_link && (p.email_sent || p.notification_sent);
+          });
+
           setPaymentStats({
             total: payments.length,
             pendentes: payments.filter((p: any) => p.status === 'pendente').length,
             aprovados: aprovados.length,
+            entregues: entregues.length,
             aprovadosSemLink: aprovados.filter((p: any) => !p.invite_link).length,
             aprovadosSemEmail: aprovados.filter((p: any) => {
               // Pagamento aprovado mas sem envio de email
@@ -220,7 +227,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Linha 1: Receita e Totais */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
                   {/* Receita Total */}
                   <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                     <div className="flex items-center justify-between">
@@ -282,6 +289,22 @@ export default function DashboardPage() {
                         </p>
                       </div>
                       <CheckCircle className="w-12 h-12 text-green-500 opacity-50" />
+                    </div>
+                  </div>
+
+                  {/* Pagamentos Entregues */}
+                  <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500 hover:shadow-xl transition-shadow">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Entregues</p>
+                        <p className="mt-2 text-4xl font-bold text-teal-600">
+                          {paymentStats.entregues}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Link + Notificação OK
+                        </p>
+                      </div>
+                      <PackageCheck className="w-12 h-12 text-teal-500 opacity-50" />
                     </div>
                   </div>
                 </div>
