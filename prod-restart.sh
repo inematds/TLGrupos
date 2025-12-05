@@ -13,6 +13,20 @@ if ! command -v pm2 &> /dev/null; then
     exit 1
 fi
 
+echo "📦 Instalando dependências..."
+npm install
+
+echo ""
+echo "🔨 Fazendo build do projeto..."
+npm run build
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "❌ Erro no build! Corrija os erros antes de continuar."
+    exit 1
+fi
+
+echo ""
 echo "🌐 Reiniciando Dashboard..."
 pm2 restart tlgrupos-dashboard
 if [ $? -eq 0 ]; then
