@@ -16,7 +16,7 @@ import {
   Bell
 } from 'lucide-react';
 
-type Tab = 'geral' | 'cadastro' | 'pagamento' | 'email' | 'bot' | 'notificacoes';
+type Tab = 'geral' | 'cadastro' | 'pagamento' | 'email' | 'bot' | 'notificacoes' | 'noticias';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<Tab>('geral');
@@ -339,6 +339,7 @@ export default function SettingsPage() {
     { id: 'email' as Tab, name: 'Email', icon: Mail },
     { id: 'bot' as Tab, name: 'Bot', icon: Bot },
     { id: 'notificacoes' as Tab, name: 'Notificações', icon: Bell },
+    { id: 'noticias' as Tab, name: 'Notícias e Avisos', icon: Info },
   ];
 
   return (
@@ -1293,6 +1294,11 @@ export default function SettingsPage() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {activeTab === 'noticias' && (
+          <div className="space-y-6">
             {/* Notícias e Avisos */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -1300,7 +1306,7 @@ export default function SettingsPage() {
                 <h2 className="text-lg font-bold text-gray-900">Notícias e Avisos</h2>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                Essas informações aparecem no menu lateral do painel de controle
+                Configure mensagens de avisos e novidades para enviar aos membros
               </p>
 
               <div className="space-y-4">
