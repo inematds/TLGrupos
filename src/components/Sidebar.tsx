@@ -88,6 +88,13 @@ export default function Sidebar() {
       section: 'bottom',
     },
     {
+      title: 'Diagnostico',
+      icon: Activity,
+      href: '/status',
+      description: 'Status das APIs',
+      section: 'bottom',
+    },
+    {
       title: 'Status do Servidor',
       icon: Server,
       href: '/admin/status',

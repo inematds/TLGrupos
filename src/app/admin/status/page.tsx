@@ -239,8 +239,9 @@ export default function SystemStatusPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryPoint[]>([]);
-  const [cpuHistory, setCpuHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-  const [memHistory, setMemHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const [cpuHistory, setCpuHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const [memHistory, setMemHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const [diskHistory, setDiskHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -254,6 +255,7 @@ export default function SystemStatusPage() {
         // Update history
         setCpuHistory(prev => [...prev.slice(1), data.data.cpu.usage]);
         setMemHistory(prev => [...prev.slice(1), data.data.memory.usagePercent]);
+        setDiskHistory(prev => [...prev.slice(1), data.data.disk.usagePercent]);
       } else {
         setError(data.error);
       }
@@ -352,43 +354,55 @@ export default function SystemStatusPage() {
           </div>
         </div>
 
-        {/* Gauges Row */}
+        {/* Gauges Row with Charts */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">CPU</h3>
-            <GaugeChart
-              value={status.cpu.usage}
-              label={`${status.cpu.cores} cores`}
-              color={getStatusColor(status.cpu.usage)}
-            />
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center truncate max-w-full">
-              {status.cpu.model}
-            </p>
+          {/* CPU */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="flex flex-col items-center">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">CPU</h3>
+              <GaugeChart
+                value={status.cpu.usage}
+                label={`${status.cpu.cores} cores`}
+                color={getStatusColor(status.cpu.usage)}
+              />
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center truncate max-w-full">
+                {status.cpu.model}
+              </p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <MiniChart data={cpuHistory} color="#3b82f6" label="Historico (60s)" />
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Memoria</h3>
-            <GaugeChart
-              value={status.memory.usagePercent}
-              label={`${formatBytes(status.memory.used)} / ${formatBytes(status.memory.total)}`}
-              color={getStatusColor(status.memory.usagePercent)}
-            />
+          {/* Memoria */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="flex flex-col items-center">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Memoria</h3>
+              <GaugeChart
+                value={status.memory.usagePercent}
+                label={`${formatBytes(status.memory.used)} / ${formatBytes(status.memory.total)}`}
+                color={getStatusColor(status.memory.usagePercent)}
+              />
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <MiniChart data={memHistory} color="#8b5cf6" label="Historico (60s)" />
+            </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg flex flex-col items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Disco</h3>
-            <GaugeChart
-              value={status.disk.usagePercent}
-              label={`${formatBytes(status.disk.used)} / ${formatBytes(status.disk.total)}`}
-              color={getStatusColor(status.disk.usagePercent)}
-            />
+          {/* Disco */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+            <div className="flex flex-col items-center">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Disco</h3>
+              <GaugeChart
+                value={status.disk.usagePercent}
+                label={`${formatBytes(status.disk.used)} / ${formatBytes(status.disk.total)}`}
+                color={getStatusColor(status.disk.usagePercent)}
+              />
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <MiniChart data={diskHistory} color="#10b981" label="Historico (60s)" />
+            </div>
           </div>
-        </div>
-
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <MiniChart data={cpuHistory} color="#3b82f6" label="CPU (ultimos 30s)" />
-          <MiniChart data={memHistory} color="#8b5cf6" label="Memoria (ultimos 30s)" />
         </div>
 
         {/* Details Row */}
