@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendPaymentApprovedNotification } from '@/services/notification-service';
+import { trackCronExecution } from '@/lib/cron-tracker';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -180,6 +181,9 @@ export async function POST(request: NextRequest) {
     const message = `Enviados: ${results.enviados}/${results.total}, Erros: ${results.erros}`;
     console.log(`[Cron Send Notifications] Finalizado. ${message}`);
 
+    // Registrar execução na tabela cron_jobs
+    await trackCronExecution('/api/cron/send-pending-notifications', true);
+
     return NextResponse.json({
       success: true,
       message,
@@ -188,6 +192,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[Cron Send Notifications] Erro geral:', error);
+
+    // Registrar execução com erro
+    await trackCronExecution('/api/cron/send-pending-notifications', false);
+
     return NextResponse.json(
       {
         success: false,

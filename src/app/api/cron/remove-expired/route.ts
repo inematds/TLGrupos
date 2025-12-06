@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { removeExpiredMembers } from '@/services/cron-service';
+import { trackCronExecution } from '@/lib/cron-tracker';
 
 // POST /api/cron/remove-expired - Remove membros vencidos
 export async function POST(request: NextRequest) {
@@ -20,12 +21,19 @@ export async function POST(request: NextRequest) {
 
     const result = await removeExpiredMembers();
 
+    // Registrar execução na tabela cron_jobs
+    await trackCronExecution('/api/cron/remove-expired', true);
+
     return NextResponse.json({
       success: true,
       data: result,
     });
   } catch (error: any) {
     console.error('Erro ao remover membros vencidos:', error);
+
+    // Registrar execução com erro
+    await trackCronExecution('/api/cron/remove-expired', false);
+
     return NextResponse.json(
       {
         success: false,

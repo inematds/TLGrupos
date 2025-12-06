@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendAllScheduledNotifications } from '@/services/notification-service';
+import { trackCronExecution } from '@/lib/cron-tracker';
 
 /**
  * Endpoint de cron job para verificar e enviar notificações de vencimento
@@ -33,6 +34,9 @@ export async function GET(request: NextRequest) {
 
     console.log('[Cron] Verificação concluída:', results);
 
+    // Registrar execução na tabela cron_jobs
+    await trackCronExecution('/api/cron/check-expirations', true);
+
     return NextResponse.json({
       success: true,
       message: 'Verificação de vencimentos concluída',
@@ -41,6 +45,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('[Cron] Erro ao verificar vencimentos:', error);
+
+    // Registrar execução com erro
+    await trackCronExecution('/api/cron/check-expirations', false);
+
     return NextResponse.json(
       {
         success: false,

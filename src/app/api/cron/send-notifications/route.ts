@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendAllScheduledNotifications } from '@/services/notification-service';
+import { trackCronExecution } from '@/lib/cron-tracker';
 
 // POST /api/cron/send-notifications - Envia notificações programadas
 export async function POST(request: NextRequest) {
@@ -20,12 +21,19 @@ export async function POST(request: NextRequest) {
 
     const result = await sendAllScheduledNotifications();
 
+    // Registrar execução na tabela cron_jobs
+    await trackCronExecution('/api/cron/send-notifications', true);
+
     return NextResponse.json({
       success: true,
       data: result,
     });
   } catch (error: any) {
     console.error('Erro ao enviar notificações:', error);
+
+    // Registrar execução com erro
+    await trackCronExecution('/api/cron/send-notifications', false);
+
     return NextResponse.json(
       {
         success: false,

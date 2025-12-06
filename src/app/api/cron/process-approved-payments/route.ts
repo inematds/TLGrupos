@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createInviteLink, createGenericInviteLink } from '@/lib/telegram';
 import { sendPaymentApprovedNotification } from '@/services/notification-service';
+import { trackCronExecution } from '@/lib/cron-tracker';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -253,6 +254,9 @@ export async function POST(request: NextRequest) {
     const message = `Processados: ${results.processados}/${results.total}, Erros: ${results.erros}`;
     console.log(`[Cron] Finalizado. ${message}`);
 
+    // Registrar execução na tabela cron_jobs
+    await trackCronExecution('/api/cron/process-approved-payments', true);
+
     return NextResponse.json({
       success: true,
       message,
@@ -261,6 +265,10 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[Cron] Erro geral ao processar pagamentos:', error);
+
+    // Registrar execução com erro
+    await trackCronExecution('/api/cron/process-approved-payments', false);
+
     return NextResponse.json(
       {
         success: false,
