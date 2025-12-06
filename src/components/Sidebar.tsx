@@ -26,7 +26,8 @@ import {
   Plus,
   Bell,
   Activity,
-  Clock
+  Clock,
+  Server
 } from 'lucide-react';
 
 export default function Sidebar() {
@@ -87,10 +88,10 @@ export default function Sidebar() {
       section: 'bottom',
     },
     {
-      title: 'Status',
-      icon: Activity,
-      href: '/status',
-      description: 'Diagnóstico do sistema',
+      title: 'Status do Servidor',
+      icon: Server,
+      href: '/admin/status',
+      description: 'Monitoramento da maquina',
       section: 'bottom',
     },
     {
