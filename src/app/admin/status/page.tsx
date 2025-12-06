@@ -116,36 +116,225 @@ function ProgressBar({ value, label, color, detail }: { value: number; label: st
   );
 }
 
-function MiniChart({ data, color, label }: { data: number[]; color: string; label: string }) {
-  const max = Math.max(...data, 100);
-  const min = 0;
-  const range = max - min;
+interface MetricInfo {
+  title: string;
+  description: string;
+  details: string[];
+  tips: string[];
+}
 
-  const points = data.map((value, index) => {
-    const x = (index / (data.length - 1)) * 100;
+const metricInfos: Record<string, MetricInfo> = {
+  cpu: {
+    title: 'CPU - Unidade Central de Processamento',
+    description: 'A CPU e o "cerebro" do servidor. Ela executa todas as instrucoes dos programas e processa os dados.',
+    details: [
+      'Uso de 0-30%: Servidor tranquilo, capacidade de sobra',
+      'Uso de 30-70%: Carga moderada, funcionamento normal',
+      'Uso de 70-90%: Carga alta, monitorar de perto',
+      'Uso acima de 90%: Critico! Pode causar lentidao'
+    ],
+    tips: [
+      'Se o uso esta constantemente alto, considere otimizar o codigo ou aumentar recursos',
+      'Picos ocasionais sao normais durante processamentos intensos',
+      'Cores: Quanto mais nucleos (cores), mais processos simultaneos'
+    ]
+  },
+  memory: {
+    title: 'Memoria RAM',
+    description: 'A memoria RAM armazena temporariamente os dados que estao sendo usados pelos programas em execucao.',
+    details: [
+      'Uso de 0-50%: Excelente, muita memoria livre',
+      'Uso de 50-75%: Normal para servidores em producao',
+      'Uso de 75-90%: Atencao, memoria ficando escassa',
+      'Uso acima de 90%: Critico! Pode causar travamentos'
+    ],
+    tips: [
+      'Memoria alta pode indicar vazamento de memoria (memory leak)',
+      'Reiniciar a aplicacao pode liberar memoria acumulada',
+      'Considere aumentar RAM se o uso for constantemente alto'
+    ]
+  },
+  disk: {
+    title: 'Disco / Armazenamento',
+    description: 'O disco armazena todos os arquivos do sistema, banco de dados, logs e aplicacoes.',
+    details: [
+      'Uso de 0-50%: Espaco abundante',
+      'Uso de 50-75%: Normal, mas monitore o crescimento',
+      'Uso de 75-90%: Atencao, espaco ficando limitado',
+      'Uso acima de 90%: Critico! Limpe arquivos ou aumente o disco'
+    ],
+    tips: [
+      'Logs antigos podem ocupar muito espaco - configure rotacao',
+      'Backups locais podem encher o disco rapidamente',
+      'Arquivos temporarios devem ser limpos periodicamente'
+    ]
+  },
+  uptime: {
+    title: 'Uptime do Sistema',
+    description: 'O uptime indica ha quanto tempo o servidor esta funcionando sem interrupcoes desde o ultimo reinicio.',
+    details: [
+      'Uptime alto: Sistema estavel, sem reinicializacoes',
+      'Uptime baixo: Pode indicar reinicio recente ou instabilidade',
+      'Reinicializacao pode ser necessaria apos atualizacoes',
+      'Monitorar uptime ajuda a identificar problemas'
+    ],
+    tips: [
+      'Um uptime muito alto pode significar falta de atualizacoes de seguranca',
+      'Reiniciar periodicamente pode ajudar a limpar memoria',
+      'Agende manutencoes em horarios de baixo uso'
+    ]
+  },
+  loadavg: {
+    title: 'Load Average (Carga Media)',
+    description: 'O Load Average mostra a carga media do sistema nos ultimos 1, 5 e 15 minutos. Valores ideais sao menores que o numero de nucleos da CPU.',
+    details: [
+      'Valor menor que nucleos: Sistema tranquilo',
+      'Valor igual aos nucleos: Sistema em capacidade ideal',
+      'Valor 1.5x nucleos: Carga alta, pode haver lentidao',
+      'Valor 2x+ nucleos: Sobrecarga! Investigar processos'
+    ],
+    tips: [
+      'Compare o load com o numero de cores do seu processador',
+      'Load alto constante pode indicar necessidade de mais recursos',
+      'Picos momentaneos sao normais, observe a media de 15 min'
+    ]
+  },
+  memorydetails: {
+    title: 'Detalhes de Memoria',
+    description: 'Informacoes detalhadas sobre o uso de memoria do sistema e da aplicacao Node.js.',
+    details: [
+      'RAM Total: Memoria fisica do servidor',
+      'Heap Node.js: Memoria usada pelo JavaScript',
+      'RSS: Memoria total do processo incluindo bibliotecas',
+      'External: Memoria usada por objetos C++ do Node'
+    ],
+    tips: [
+      'Heap crescendo sem parar pode indicar memory leak',
+      'RSS alto pode ser normal para aplicacoes grandes',
+      'Monitore a diferenca entre heapUsed e heapTotal'
+    ]
+  },
+  network: {
+    title: 'Interfaces de Rede',
+    description: 'Lista das interfaces de rede ativas no servidor com seus respectivos enderecos IP.',
+    details: [
+      'eth0/ens*: Interface ethernet principal',
+      'docker0: Rede do Docker (se instalado)',
+      'lo: Interface de loopback (127.0.0.1)',
+      'wlan*: Interface WiFi (se disponivel)'
+    ],
+    tips: [
+      'O IP principal e geralmente o da interface eth0 ou ens*',
+      'Multiplas interfaces podem indicar VPNs ou containers',
+      'Verifique se o IP corresponde ao esperado'
+    ]
+  }
+};
+
+function InfoModal({ metric, onClose }: { metric: string; onClose: () => void }) {
+  const info = metricInfos[metric];
+  if (!info) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">{info.title}</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-2xl leading-none"
+            >
+              &times;
+            </button>
+          </div>
+
+          <p className="text-gray-600 dark:text-gray-300 mb-6">{info.description}</p>
+
+          <div className="mb-6">
+            <h3 className="font-semibold text-gray-800 dark:text-white mb-3">Niveis de Uso:</h3>
+            <ul className="space-y-2">
+              {info.details.map((detail, idx) => (
+                <li key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                  <span className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                    idx === 0 ? 'bg-green-500' :
+                    idx === 1 ? 'bg-blue-500' :
+                    idx === 2 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`} />
+                  {detail}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-800 dark:text-blue-300 mb-2">Dicas:</h3>
+            <ul className="space-y-1">
+              {info.tips.map((tip, idx) => (
+                <li key={idx} className="text-sm text-blue-700 dark:text-blue-300 flex items-start gap-2">
+                  <span className="text-blue-500">•</span>
+                  {tip}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="mt-6 w-full py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniChart({ data, color, label, metricType, onInfoClick }: { data: number[]; color: string; label: string; metricType?: string; onInfoClick?: () => void }) {
+  // Garantir que temos dados validos para o grafico
+  const hasData = data.some(v => v > 0);
+  const validData = hasData ? data : data.map(() => 0.5);
+  const max = 100; // Sempre usar 100 como maximo para percentuais
+  const min = 0;
+  const range = max - min || 1; // Evitar divisao por zero
+
+  const points = validData.map((value, index) => {
+    const x = (index / (validData.length - 1)) * 100;
     const y = 100 - ((value - min) / range) * 100;
     return `${x},${y}`;
   }).join(' ');
 
   const areaPoints = `0,100 ${points} 100,100`;
+  const currentValue = data[data.length - 1] || 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+    <div className="rounded-lg">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
-        <span className="text-lg font-bold" style={{ color }}>{data[data.length - 1]?.toFixed(1) || 0}%</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          {label}
+        </span>
+        <span className="text-lg font-bold" style={{ color }}>{currentValue.toFixed(1)}%</span>
       </div>
       <svg viewBox="0 0 100 50" className="w-full h-16">
         <defs>
-          <linearGradient id={`gradient-${label}`} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <linearGradient id={`gradient-${label.replace(/\s/g, '-')}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.4" />
             <stop offset="100%" stopColor={color} stopOpacity="0.05" />
           </linearGradient>
         </defs>
+        {/* Grid lines */}
+        <line x1="0" y1="25" x2="100" y2="25" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+        <line x1="0" y1="50" x2="100" y2="50" stroke="#e5e7eb" strokeWidth="0.5" strokeDasharray="2,2" />
+        {/* Area fill */}
         <polygon
           points={areaPoints}
-          fill={`url(#gradient-${label})`}
+          fill={`url(#gradient-${label.replace(/\s/g, '-')})`}
         />
+        {/* Line */}
         <polyline
           points={points}
           fill="none"
@@ -154,7 +343,20 @@ function MiniChart({ data, color, label }: { data: number[]; color: string; labe
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+        {/* Current value dot */}
+        {hasData && (
+          <circle
+            cx="100"
+            cy={100 - (currentValue / 100) * 100}
+            r="3"
+            fill={color}
+            className="animate-pulse"
+          />
+        )}
       </svg>
+      {!hasData && (
+        <p className="text-xs text-gray-400 text-center mt-1">Coletando dados...</p>
+      )}
     </div>
   );
 }
@@ -242,6 +444,7 @@ export default function SystemStatusPage() {
   const [cpuHistory, setCpuHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   const [memHistory, setMemHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   const [diskHistory, setDiskHistory] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -321,13 +524,20 @@ export default function SystemStatusPage() {
             <Clock />
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Uptime do Sistema</h3>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all"
+            onClick={() => setSelectedMetric('uptime')}
+            title="Clique para mais informacoes"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              Uptime do Sistema
+              <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+            </h3>
             <div className="text-4xl font-mono font-bold text-blue-600 dark:text-blue-400 mb-2">
               {status.uptime.formatted}
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Servidor ativo desde o último reinício
+              Servidor ativo desde o ultimo reinicio
             </p>
           </div>
 
@@ -357,9 +567,16 @@ export default function SystemStatusPage() {
         {/* Gauges Row with Charts */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* CPU */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all"
+            onClick={() => setSelectedMetric('cpu')}
+            title="Clique para mais informacoes"
+          >
             <div className="flex flex-col items-center">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">CPU</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                CPU
+                <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+              </h3>
               <GaugeChart
                 value={status.cpu.usage}
                 label={`${status.cpu.cores} cores`}
@@ -370,14 +587,26 @@ export default function SystemStatusPage() {
               </p>
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <MiniChart data={cpuHistory} color="#3b82f6" label="Historico (60s)" />
+              <MiniChart
+                data={cpuHistory}
+                color="#3b82f6"
+                label="Historico CPU (60s)"
+                metricType="cpu"
+              />
             </div>
           </div>
 
           {/* Memoria */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all"
+            onClick={() => setSelectedMetric('memory')}
+            title="Clique para mais informacoes"
+          >
             <div className="flex flex-col items-center">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Memoria</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                Memoria
+                <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+              </h3>
               <GaugeChart
                 value={status.memory.usagePercent}
                 label={`${formatBytes(status.memory.used)} / ${formatBytes(status.memory.total)}`}
@@ -385,14 +614,26 @@ export default function SystemStatusPage() {
               />
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <MiniChart data={memHistory} color="#8b5cf6" label="Historico (60s)" />
+              <MiniChart
+                data={memHistory}
+                color="#8b5cf6"
+                label="Historico Memoria (60s)"
+                metricType="memory"
+              />
             </div>
           </div>
 
           {/* Disco */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all"
+            onClick={() => setSelectedMetric('disk')}
+            title="Clique para mais informacoes"
+          >
             <div className="flex flex-col items-center">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Disco</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+                Disco
+                <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+              </h3>
               <GaugeChart
                 value={status.disk.usagePercent}
                 label={`${formatBytes(status.disk.used)} / ${formatBytes(status.disk.total)}`}
@@ -400,7 +641,12 @@ export default function SystemStatusPage() {
               />
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <MiniChart data={diskHistory} color="#10b981" label="Historico (60s)" />
+              <MiniChart
+                data={diskHistory}
+                color="#10b981"
+                label="Historico Disco (60s)"
+                metricType="disk"
+              />
             </div>
           </div>
         </div>
@@ -408,8 +654,15 @@ export default function SystemStatusPage() {
         {/* Details Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Memory Details */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Detalhes de Memoria</h3>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all"
+            onClick={() => setSelectedMetric('memorydetails')}
+            title="Clique para mais informacoes"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              Detalhes de Memoria
+              <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+            </h3>
             <ProgressBar
               value={status.memory.usagePercent}
               label="RAM Total"
@@ -431,8 +684,15 @@ export default function SystemStatusPage() {
           </div>
 
           {/* Load Average */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Load Average</h3>
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.01] transition-all"
+            onClick={() => setSelectedMetric('loadavg')}
+            title="Clique para mais informacoes"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+              Load Average
+              <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+            </h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 bg-gray-100 dark:bg-gray-700 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -454,11 +714,18 @@ export default function SystemStatusPage() {
               </div>
             </div>
 
-            <div className="mt-6">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Interfaces de Rede</h4>
+            <div
+              className="mt-6 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              onClick={(e) => { e.stopPropagation(); setSelectedMetric('network'); }}
+              title="Clique para mais informacoes"
+            >
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                Interfaces de Rede
+                <span className="text-xs text-blue-500 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">?</span>
+              </h4>
               <div className="space-y-2">
                 {status.network.interfaces.map((iface, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-2 bg-gray-100 dark:bg-gray-700 rounded">
+                  <div key={idx} className="flex justify-between items-center p-2 bg-white dark:bg-gray-800 rounded">
                     <span className="text-sm text-gray-600 dark:text-gray-400">{iface.name}</span>
                     <span className="text-sm font-mono text-gray-800 dark:text-white">{iface.address}</span>
                   </div>
@@ -474,6 +741,11 @@ export default function SystemStatusPage() {
           Atualizando a cada 3 segundos
         </div>
       </div>
+
+      {/* Modal de Informacoes */}
+      {selectedMetric && (
+        <InfoModal metric={selectedMetric} onClose={() => setSelectedMetric(null)} />
+      )}
 
       <style jsx>{`
         @keyframes shimmer {
