@@ -80,7 +80,20 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadConfigs();
+    loadTelegramGroups();
   }, []);
+
+  const loadTelegramGroups = async () => {
+    try {
+      const response = await fetch('/api/telegram-groups');
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setTelegramGroups(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar grupos do Telegram:', error);
+    }
+  };
 
   const loadConfigs = async () => {
     try {
@@ -833,6 +846,20 @@ export default function SettingsPage() {
 
         {activeTab === 'bot' && (
           <div className="space-y-6">
+            {/* Contador de Grupos no Topo */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium opacity-90 uppercase">Total de Grupos Telegram</p>
+                  <p className="text-5xl font-bold mt-1">{telegramGroups.length}</p>
+                  <p className="text-sm opacity-80 mt-2">
+                    {telegramGroups.filter(g => g.ativo).length} ativos | {telegramGroups.filter(g => !g.ativo).length} inativos
+                  </p>
+                </div>
+                <Bot className="w-16 h-16 opacity-30" />
+              </div>
+            </div>
+
             {/* Informações do Bot */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg shadow-sm border border-blue-200 p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -847,8 +874,8 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500 mt-1">Configurado em .env.local</p>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Grupos Ativos</p>
-                  <p className="text-2xl font-bold text-green-600">7</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Grupos Cadastrados</p>
+                  <p className="text-2xl font-bold text-green-600">{telegramGroups.length}</p>
                   <p className="text-xs text-gray-500 mt-1">Bot operando normalmente</p>
                 </div>
               </div>
@@ -856,7 +883,7 @@ export default function SettingsPage() {
               <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-r-lg">
                 <p className="text-sm text-yellow-800">
                   <strong>⚠️ Sistema de Convites:</strong> Os links de acesso serão gerados apenas para o <strong>grupo principal</strong>.
-                  O bot continuará cadastrando membros em todos os 7 grupos automaticamente.
+                  O bot continuará cadastrando membros em todos os {telegramGroups.length} grupos automaticamente.
                 </p>
               </div>
 
@@ -920,37 +947,59 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Outros Grupos */}
+                {/* Lista de Todos os Grupos */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-sm font-medium text-gray-700">Outros Grupos (Auto-cadastro apenas)</p>
+                    <p className="text-sm font-medium text-gray-700">Todos os Grupos Cadastrados</p>
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
-                      6 grupos
+                      {telegramGroups.length} grupos
                     </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <div className="bg-white p-2 rounded border border-gray-200">
-                      <p className="text-xs font-mono text-gray-600">-1002466217981</p>
+                  {telegramGroups.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <p>Nenhum grupo cadastrado</p>
+                      <p className="text-xs mt-1">Acesse a pagina de Grupos para adicionar</p>
                     </div>
-                    <div className="bg-white p-2 rounded border border-gray-200">
-                      <p className="text-xs font-mono text-gray-600">-1002286953019</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                      {telegramGroups.map((grupo: any) => (
+                        <div
+                          key={grupo.id}
+                          className={`p-2 rounded border ${
+                            grupo.chat_id === botGrupoPrincipal
+                              ? 'bg-green-50 border-green-300'
+                              : grupo.ativo
+                              ? 'bg-white border-gray-200'
+                              : 'bg-gray-100 border-gray-300 opacity-60'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-gray-900 truncate">
+                                {grupo.nome || 'Sem nome'}
+                              </p>
+                              <p className="text-xs font-mono text-gray-500">{grupo.chat_id}</p>
+                            </div>
+                            <div className="flex items-center gap-1 ml-2">
+                              {grupo.chat_id === botGrupoPrincipal && (
+                                <span className="px-1.5 py-0.5 bg-green-500 text-white text-xs rounded">
+                                  Principal
+                                </span>
+                              )}
+                              {grupo.ativo ? (
+                                <span className="w-2 h-2 bg-green-500 rounded-full" title="Ativo"></span>
+                              ) : (
+                                <span className="w-2 h-2 bg-gray-400 rounded-full" title="Inativo"></span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="bg-white p-2 rounded border border-gray-200">
-                      <p className="text-xs font-mono text-gray-600">-1002315381358</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border border-gray-200">
-                      <p className="text-xs font-mono text-gray-600">-1002414487357</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border border-gray-200">
-                      <p className="text-xs font-mono text-gray-600">-1002307181433</p>
-                    </div>
-                    <div className="bg-white p-2 rounded border border-gray-200">
-                      <p className="text-xs font-mono text-gray-600">-1002475673809</p>
-                    </div>
-                  </div>
+                  )}
                   <div className="mt-3 bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r">
                     <p className="text-xs text-blue-800">
-                      <strong>ℹ️ Funcionamento:</strong> Estes grupos continuam com cadastro automático de novos membros, mas não receberão links de convite pagos (apenas o grupo principal recebe).
+                      <strong>ℹ️ Funcionamento:</strong> Todos os grupos recebem cadastro automatico de novos membros. Apenas o grupo principal recebe links de convite pagos.
                     </p>
                   </div>
                 </div>
