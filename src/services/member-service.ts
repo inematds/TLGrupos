@@ -337,26 +337,10 @@ export async function deleteMember(id: string) {
 
 /**
  * Obtém estatísticas gerais
+ * Calcula diretamente da tabela members para garantir dados atualizados
  */
 export async function getStats() {
-  // Tentar usar a view stats primeiro
-  const { data: statsViewData, error: statsViewError } = await supabase
-    .from('stats')
-    .select('*')
-    .single();
-
-  // Se a view funcionar e tiver dados válidos, usar ela
-  if (!statsViewError && statsViewData && statsViewData.total_cadastros > 0) {
-    console.log('[getStats] Usando view stats do Supabase:', statsViewData.total_cadastros, 'membros');
-    return statsViewData as Stats;
-  }
-
-  // Fallback: calcular estatísticas manualmente se a view não funcionar
-  console.log('[getStats] View stats não disponível ou vazia, calculando manualmente...');
-  console.log('[getStats] statsViewError:', statsViewError);
-  console.log('[getStats] statsViewData:', statsViewData);
-
-  // Buscar todos os membros
+  // Buscar todos os membros diretamente (não usar view que pode estar desatualizada)
   const { data: allMembers, error: membersError } = await supabase
     .from('members')
     .select('id, status, telegram_user_id, data_vencimento, no_grupo');
@@ -369,9 +353,7 @@ export async function getStats() {
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-  console.log(`[getStats] Total de membros encontrados: ${members.length}`);
-
-  // Calcular estatísticas
+  // Calcular estatísticas em tempo real
   const stats = {
     total_cadastros: members.length,
     total_ativos: members.filter(m => m.status === 'ativo').length,
