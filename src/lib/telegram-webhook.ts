@@ -28,6 +28,68 @@ console.log(`🤖 [Webhook] Monitorando ${GROUP_IDS.length} grupo(s):`, GROUP_ID
 // Configuração padrão
 const DEFAULT_EXPIRY_DAYS = 30;
 
+// Cache das mensagens configuráveis (atualiza a cada 5 minutos)
+let cachedMessages: Record<string, string> = {};
+let lastMessagesFetch = 0;
+const MESSAGES_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+/**
+ * Busca mensagens configuráveis do banco de dados
+ */
+async function getConfiguredMessages(): Promise<Record<string, string>> {
+  const now = Date.now();
+
+  // Usar cache se ainda válido
+  if (now - lastMessagesFetch < MESSAGES_CACHE_TTL && Object.keys(cachedMessages).length > 0) {
+    return cachedMessages;
+  }
+
+  try {
+    const { data: configs } = await supabase
+      .from('system_config')
+      .select('chave, valor')
+      .in('chave', [
+        'msg_boas_vindas',
+        'msg_cadastro_mensagem',
+        'msg_registrar',
+        'dias_acesso_padrao'
+      ]);
+
+    if (configs && configs.length > 0) {
+      cachedMessages = {};
+      for (const config of configs) {
+        cachedMessages[config.chave] = config.valor;
+      }
+      lastMessagesFetch = now;
+      console.log('[Webhook] Mensagens configuráveis carregadas do banco');
+    }
+  } catch (error) {
+    console.error('[Webhook] Erro ao buscar mensagens do banco:', error);
+  }
+
+  return cachedMessages;
+}
+
+/**
+ * Aplica variáveis na mensagem
+ * Variáveis: {nome}, {dias}, {data_vencimento}
+ */
+function formatMessage(template: string, vars: { nome?: string; dias?: number; data_vencimento?: Date }): string {
+  let msg = template;
+
+  if (vars.nome) {
+    msg = msg.replace(/\{nome\}/g, vars.nome);
+  }
+  if (vars.dias !== undefined) {
+    msg = msg.replace(/\{dias\}/g, String(vars.dias));
+  }
+  if (vars.data_vencimento) {
+    msg = msg.replace(/\{data_vencimento\}/g, vars.data_vencimento.toLocaleDateString('pt-BR'));
+  }
+
+  return msg;
+}
+
 /**
  * Busca a URL configurada para o formulário de cadastro
  */
@@ -439,13 +501,23 @@ bot.on('new_chat_members', async (ctx) => {
             .eq('id', result.member.id);
         }
 
-        // Enviar mensagem de boas-vindas
+        // Enviar mensagem de boas-vindas (usando mensagem configurável)
         try {
-          await ctx.reply(
-            `🎉 Bem-vindo(a) ${member.first_name}!\n\n` +
-            `Você foi cadastrado automaticamente no sistema.\n\n` +
-            `Use /status para verificar sua data de vencimento.`
-          );
+          const messages = await getConfiguredMessages();
+          const diasAcesso = parseInt(messages.dias_acesso_padrao) || DEFAULT_EXPIRY_DAYS;
+          const dataVencimento = new Date();
+          dataVencimento.setDate(dataVencimento.getDate() + diasAcesso);
+
+          const msgTemplate = messages.msg_boas_vindas ||
+            `🎉 Bem-vindo(a) ao grupo, {nome}!\n\n✅ Você foi cadastrado automaticamente no sistema.\n📅 Seu acesso é válido por {dias} dias.\n\nUse /status para verificar sua situação a qualquer momento.`;
+
+          const msgFormatada = formatMessage(msgTemplate, {
+            nome: member.first_name,
+            dias: diasAcesso,
+            data_vencimento: dataVencimento
+          });
+
+          await ctx.reply(msgFormatada);
         } catch (err) {
           console.error('[Webhook] Erro ao enviar boas-vindas:', err);
         }
@@ -583,18 +655,22 @@ bot.command('registrar', async (ctx) => {
   );
 
   if (result.success) {
+    // Usar mensagem configurável do banco
+    const messages = await getConfiguredMessages();
+    const diasAcesso = parseInt(messages.dias_acesso_padrao) || DEFAULT_EXPIRY_DAYS;
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + DEFAULT_EXPIRY_DAYS);
+    expiryDate.setDate(expiryDate.getDate() + diasAcesso);
 
-    await ctx.reply(
-      `🎉 Cadastro realizado com sucesso!\n\n` +
-      `👤 Nome: ${user.first_name}\n` +
-      `🆔 ID: ${user.id}\n` +
-      `📅 Vencimento: ${expiryDate.toLocaleDateString('pt-BR')}\n\n` +
-      `✅ Seu acesso está ativo!\n\n` +
-      `Use /status para verificar a qualquer momento.`,
-      { reply_to_message_id: ctx.message.message_id }
-    );
+    const msgTemplate = messages.msg_registrar ||
+      `✅ Cadastro realizado com sucesso, {nome}!\n\n📅 Seu acesso é válido por {dias} dias.\n📆 Vencimento: {data_vencimento}\n\nUse /status para acompanhar seu cadastro.`;
+
+    const msgFormatada = formatMessage(msgTemplate, {
+      nome: user.first_name,
+      dias: diasAcesso,
+      data_vencimento: expiryDate
+    });
+
+    await ctx.reply(msgFormatada, { reply_to_message_id: ctx.message.message_id });
   } else {
     await ctx.reply(
       `❌ Erro ao realizar cadastro.\n\n` +
