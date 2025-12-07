@@ -820,6 +820,69 @@ bot.command('entrar', async (ctx) => {
 });
 
 /**
+ * Busca grupos e seus links para exibir no /status
+ */
+async function getGroupsForStatus(): Promise<string> {
+  try {
+    // Buscar grupo principal configurado
+    const { data: configData } = await supabase
+      .from('system_config')
+      .select('valor')
+      .eq('chave', 'bot_grupo_principal')
+      .single();
+
+    const grupoPrincipalId = configData?.valor || '';
+
+    // Buscar todos os grupos ativos
+    const { data: grupos } = await supabase
+      .from('telegram_groups')
+      .select('id, nome, telegram_group_id, chat_id, invite_link, ativo')
+      .eq('ativo', true)
+      .order('nome');
+
+    if (!grupos || grupos.length === 0) {
+      return '';
+    }
+
+    // Separar grupo principal dos outros
+    const grupoPrincipal = grupos.find(g =>
+      g.telegram_group_id === grupoPrincipalId || g.chat_id === grupoPrincipalId
+    );
+    const outrosGrupos = grupos.filter(g =>
+      g.telegram_group_id !== grupoPrincipalId && g.chat_id !== grupoPrincipalId
+    );
+
+    let gruposText = '\n📱 *GRUPOS DISPONÍVEIS:*\n';
+
+    // Grupo principal primeiro (destacado)
+    if (grupoPrincipal) {
+      const link = grupoPrincipal.invite_link || 'Link não disponível';
+      gruposText += `\n⭐ *PRINCIPAL:* ${grupoPrincipal.nome}\n`;
+      if (grupoPrincipal.invite_link) {
+        gruposText += `🔗 ${grupoPrincipal.invite_link}\n`;
+      }
+    }
+
+    // Outros grupos
+    if (outrosGrupos.length > 0) {
+      gruposText += `\n📋 *Outros grupos:*\n`;
+      for (const grupo of outrosGrupos) {
+        gruposText += `• ${grupo.nome}`;
+        if (grupo.invite_link) {
+          gruposText += `\n  🔗 ${grupo.invite_link}`;
+        }
+        gruposText += '\n';
+      }
+    }
+
+    return gruposText;
+  } catch (error) {
+    console.error('[/status] Erro ao buscar grupos:', error);
+    return '';
+  }
+}
+
+/**
  * Comando /status - Verificar cadastro
  */
 bot.command('status', async (ctx) => {
@@ -879,16 +942,20 @@ bot.command('status', async (ctx) => {
     statusMsg = 'Próximo ao vencimento';
   }
 
+  // Buscar lista de grupos
+  const gruposText = await getGroupsForStatus();
+
   const statusMessage =
-    `${statusEmoji} Status do seu cadastro:\n\n` +
+    `${statusEmoji} *Status do seu cadastro:*\n\n` +
     `👤 Nome: ${member.nome}\n` +
     `🆔 ID: ${member.telegram_user_id}\n` +
     `📅 Cadastrado em: ${new Date(member.data_entrada).toLocaleDateString('pt-BR')}\n` +
     `📅 Vencimento: ${vencimento.toLocaleDateString('pt-BR')}\n` +
     `⏰ Dias restantes: ${diasRestantes > 0 ? diasRestantes : 'VENCIDO'}\n` +
-    `📊 Status: ${statusMsg}\n\n` +
-    `${diasRestantes <= 7 && diasRestantes > 0 ? '⚠️ Seu acesso está próximo de vencer!\n' : ''}` +
-    `${diasRestantes < 0 ? '❌ Seu acesso está vencido. Solicite renovação.\n' : ''}`;
+    `📊 Status: ${statusMsg}\n` +
+    `${diasRestantes <= 7 && diasRestantes > 0 ? '\n⚠️ Seu acesso está próximo de vencer!' : ''}` +
+    `${diasRestantes < 0 ? '\n❌ Seu acesso está vencido. Solicite renovação.' : ''}` +
+    gruposText;
 
   // Se foi usado no grupo, enviar no privado
   if (isGroup) {
@@ -900,8 +967,8 @@ bot.command('status', async (ctx) => {
     }
 
     try {
-      // Enviar status no privado
-      await ctx.telegram.sendMessage(user.id, statusMessage);
+      // Enviar status no privado (com parse_mode para formatação)
+      await ctx.telegram.sendMessage(user.id, statusMessage, { parse_mode: 'Markdown' });
 
       // Avisar no grupo que foi enviado no privado (mensagem auto-deletável)
       const notification = await ctx.reply(
@@ -929,8 +996,8 @@ bot.command('status', async (ctx) => {
       );
     }
   } else {
-    // Se já é privado, responder normalmente
-    await ctx.reply(statusMessage);
+    // Se já é privado, responder normalmente (com parse_mode para formatação)
+    await ctx.reply(statusMessage, { parse_mode: 'Markdown' });
   }
 });
 
