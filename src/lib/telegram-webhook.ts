@@ -820,7 +820,26 @@ bot.command('entrar', async (ctx) => {
 });
 
 /**
+ * Gera link de acesso direto (t.me/c/...) que só funciona para membros do grupo
+ * Formato: chat_id -1001234567890 → t.me/c/1234567890/1
+ */
+function gerarLinkAcessoDireto(chatId: string | null): string | null {
+  if (!chatId) return null;
+
+  // Remover o prefixo -100 do chat_id
+  let id = chatId.toString();
+  if (id.startsWith('-100')) {
+    id = id.substring(4); // Remove os 4 primeiros caracteres (-100)
+  } else if (id.startsWith('-')) {
+    id = id.substring(1); // Remove apenas o -
+  }
+
+  return `https://t.me/c/${id}/1`;
+}
+
+/**
  * Busca grupos e seus links para exibir no /status
+ * Usa links de acesso direto (t.me/c/...) que só funcionam para quem já é membro
  */
 async function getGroupsForStatus(): Promise<string> {
   try {
@@ -852,14 +871,15 @@ async function getGroupsForStatus(): Promise<string> {
       g.telegram_group_id !== grupoPrincipalId && g.chat_id !== grupoPrincipalId
     );
 
-    let gruposText = '\n📱 *GRUPOS DISPONÍVEIS:*\n';
+    let gruposText = '\n📱 *SEUS GRUPOS:*\n';
+    gruposText += '_(Links só funcionam para membros)_\n';
 
     // Grupo principal primeiro (destacado)
     if (grupoPrincipal) {
-      const link = grupoPrincipal.invite_link || 'Link não disponível';
+      const linkAcesso = gerarLinkAcessoDireto(grupoPrincipal.chat_id || grupoPrincipal.telegram_group_id);
       gruposText += `\n⭐ *PRINCIPAL:* ${grupoPrincipal.nome}\n`;
-      if (grupoPrincipal.invite_link) {
-        gruposText += `🔗 ${grupoPrincipal.invite_link}\n`;
+      if (linkAcesso) {
+        gruposText += `🔗 [Acessar grupo](${linkAcesso})\n`;
       }
     }
 
@@ -867,9 +887,10 @@ async function getGroupsForStatus(): Promise<string> {
     if (outrosGrupos.length > 0) {
       gruposText += `\n📋 *Outros grupos:*\n`;
       for (const grupo of outrosGrupos) {
+        const linkAcesso = gerarLinkAcessoDireto(grupo.chat_id || grupo.telegram_group_id);
         gruposText += `• ${grupo.nome}`;
-        if (grupo.invite_link) {
-          gruposText += `\n  🔗 ${grupo.invite_link}`;
+        if (linkAcesso) {
+          gruposText += ` - [Acessar](${linkAcesso})`;
         }
         gruposText += '\n';
       }
