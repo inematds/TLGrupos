@@ -853,30 +853,34 @@ async function getGroupsForStatus(): Promise<string> {
     const grupoPrincipalId = configData?.valor || '';
 
     // Buscar todos os grupos ativos
-    const { data: grupos } = await supabase
+    const { data: grupos, error } = await supabase
       .from('telegram_groups')
-      .select('id, nome, telegram_group_id, chat_id, invite_link, ativo')
+      .select('id, nome, telegram_group_id, ativo')
       .eq('ativo', true)
       .order('nome');
 
-    if (!grupos || grupos.length === 0) {
+    if (error) {
+      console.error('[/status] Erro na query grupos:', error);
       return '';
     }
 
+    if (!grupos || grupos.length === 0) {
+      console.log('[/status] Nenhum grupo ativo encontrado');
+      return '';
+    }
+
+    console.log(`[/status] ${grupos.length} grupos encontrados. Principal: ${grupoPrincipalId}`);
+
     // Separar grupo principal dos outros
-    const grupoPrincipal = grupos.find(g =>
-      g.telegram_group_id === grupoPrincipalId || g.chat_id === grupoPrincipalId
-    );
-    const outrosGrupos = grupos.filter(g =>
-      g.telegram_group_id !== grupoPrincipalId && g.chat_id !== grupoPrincipalId
-    );
+    const grupoPrincipal = grupos.find(g => g.telegram_group_id === grupoPrincipalId);
+    const outrosGrupos = grupos.filter(g => g.telegram_group_id !== grupoPrincipalId);
 
     let gruposText = '\n📱 *SEUS GRUPOS:*\n';
     gruposText += '_(Links só funcionam para membros)_\n';
 
     // Grupo principal primeiro (destacado)
     if (grupoPrincipal) {
-      const linkAcesso = gerarLinkAcessoDireto(grupoPrincipal.chat_id || grupoPrincipal.telegram_group_id);
+      const linkAcesso = gerarLinkAcessoDireto(grupoPrincipal.telegram_group_id);
       gruposText += `\n⭐ *PRINCIPAL:* ${grupoPrincipal.nome}\n`;
       if (linkAcesso) {
         gruposText += `🔗 [Acessar grupo](${linkAcesso})\n`;
@@ -887,7 +891,7 @@ async function getGroupsForStatus(): Promise<string> {
     if (outrosGrupos.length > 0) {
       gruposText += `\n📋 *Outros grupos:*\n`;
       for (const grupo of outrosGrupos) {
-        const linkAcesso = gerarLinkAcessoDireto(grupo.chat_id || grupo.telegram_group_id);
+        const linkAcesso = gerarLinkAcessoDireto(grupo.telegram_group_id);
         gruposText += `• ${grupo.nome}`;
         if (linkAcesso) {
           gruposText += ` - [Acessar](${linkAcesso})`;
