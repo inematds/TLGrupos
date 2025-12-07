@@ -949,6 +949,66 @@ bot.on(message('text'), async (ctx) => {
   // Ignorar bots
   if (user.is_bot) return;
 
+  // Verificar se membro existe e está removido (precisa reativar)
+  const existing = await getMemberByTelegramId(user.id);
+
+  if (existing && existing.status === 'removido') {
+    // Membro estava removido mas está interagindo - REATIVAR
+    console.log(`[Webhook] Membro ${user.first_name} estava REMOVIDO mas interagiu. Reativando...`);
+
+    const messages = await getConfiguredMessages();
+    const diasAcesso = parseInt(messages.dias_acesso_padrao) || DEFAULT_EXPIRY_DAYS;
+    const novaDataVencimento = new Date();
+    novaDataVencimento.setDate(novaDataVencimento.getDate() + diasAcesso);
+
+    await supabase
+      .from('members')
+      .update({
+        status: 'ativo',
+        no_grupo: true,
+        data_vencimento: novaDataVencimento.toISOString(),
+        notificado_7dias: false,
+        notificado_3dias: false,
+        notificado_1dia: false,
+      })
+      .eq('id', existing.id);
+
+    // Registrar log de reativação
+    await supabase.from('logs').insert({
+      member_id: existing.id,
+      acao: 'reativacao_por_interacao',
+      detalhes: {
+        first_name: user.first_name,
+        username: user.username,
+        nova_data_vencimento: novaDataVencimento.toISOString(),
+        motivo: 'Membro removido interagiu no grupo',
+      },
+      telegram_user_id: user.id,
+      telegram_username: user.username,
+      executado_por: 'sistema',
+    });
+
+    console.log(`[Webhook] ✅ Membro ${user.first_name} REATIVADO! Nova data: ${novaDataVencimento.toLocaleDateString()}`);
+
+    // Enviar mensagem de reativação (opcional, silenciosa)
+    try {
+      const msgTemplate = messages.msg_boas_vindas ||
+        `🎉 Bem-vindo(a) de volta, {nome}!\n\nSeu acesso foi reativado automaticamente.\n📅 Válido por {dias} dias até {data_vencimento}.\n\nUse /status para verificar.`;
+
+      const msgFormatada = formatMessage(msgTemplate, {
+        nome: user.first_name,
+        dias: diasAcesso,
+        data_vencimento: novaDataVencimento
+      });
+
+      await ctx.reply(msgFormatada, { reply_to_message_id: ctx.message.message_id });
+    } catch (err) {
+      console.error('[Webhook] Erro ao enviar msg de reativação:', err);
+    }
+
+    return; // Não precisa fazer auto-registro, já tratou
+  }
+
   // Auto-registrar (silenciosamente se já existir)
   await autoRegisterMember(
     user.id,
