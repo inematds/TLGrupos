@@ -105,19 +105,22 @@ export default function BotPage() {
   async function saveConfigs() {
     setSaving(true);
     try {
+      // API espera formato: { configs: [{chave, valor}, ...] }
+      const configs = [
+        { chave: 'bot_webhook_url', valor: botWebhookUrl },
+        { chave: 'bot_grupo_principal', valor: botGrupoPrincipal },
+        { chave: 'bot_auto_cadastro_entrar', valor: String(botAutoCadastroEntrar) },
+        { chave: 'bot_auto_cadastro_mensagem', valor: String(botAutoCadastroMensagem) },
+        { chave: 'dias_acesso_padrao', valor: String(diasAcessoPadrao) },
+        { chave: 'msg_boas_vindas', valor: msgBoasVindas },
+        { chave: 'msg_cadastro_mensagem', valor: msgCadastroMensagem },
+        { chave: 'msg_registrar', valor: msgRegistrar },
+      ];
+
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bot_webhook_url: botWebhookUrl,
-          bot_grupo_principal: botGrupoPrincipal,
-          bot_auto_cadastro_entrar: botAutoCadastroEntrar,
-          bot_auto_cadastro_mensagem: botAutoCadastroMensagem,
-          dias_acesso_padrao: diasAcessoPadrao,
-          msg_boas_vindas: msgBoasVindas,
-          msg_cadastro_mensagem: msgCadastroMensagem,
-          msg_registrar: msgRegistrar,
-        }),
+        body: JSON.stringify({ configs }),
       });
       const data = await res.json();
       if (data.success) {
