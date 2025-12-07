@@ -432,6 +432,100 @@ export default function BotPage() {
                 Todo o processo e automatico. O bot rastreia o link usado e vincula ao pagamento.
               </p>
             </div>
+
+            {/* Tipos de Links do Telegram */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Tipos de Links do Telegram
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Link de Convite */}
+                <div className="border-2 border-blue-200 rounded-lg p-5 bg-blue-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-lg">+</span>
+                    </div>
+                    <h3 className="font-bold text-blue-900">Link de Convite</h3>
+                  </div>
+                  <div className="bg-white rounded p-3 mb-3">
+                    <code className="text-sm text-blue-700 break-all">t.me/+AbCdEfG123...</code>
+                  </div>
+                  <ul className="text-sm text-blue-800 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Permite <strong>novos membros</strong> entrarem no grupo</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Qualquer pessoa com o link pode usar</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Pode ter limite de usos ou data de expiração</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Usado nos e-mails de pagamento aprovado</span>
+                    </li>
+                  </ul>
+                  <div className="mt-4 pt-3 border-t border-blue-200">
+                    <span className="inline-block px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full">
+                      Para: Novos Membros
+                    </span>
+                  </div>
+                </div>
+
+                {/* Link de Acesso Direto */}
+                <div className="border-2 border-green-200 rounded-lg p-5 bg-green-50">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                      <span className="text-white text-lg">→</span>
+                    </div>
+                    <h3 className="font-bold text-green-900">Link de Acesso Direto</h3>
+                  </div>
+                  <div className="bg-white rounded p-3 mb-3">
+                    <code className="text-sm text-green-700 break-all">t.me/c/1234567890/1</code>
+                  </div>
+                  <ul className="text-sm text-green-800 space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">•</span>
+                      <span><strong>Só funciona</strong> para quem já é membro</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">•</span>
+                      <span>Abre o grupo diretamente no Telegram</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">•</span>
+                      <span>Não permite entrada de novos membros</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-600 mt-0.5">•</span>
+                      <span>Exibido no comando /status do bot</span>
+                    </li>
+                  </ul>
+                  <div className="mt-4 pt-3 border-t border-green-200">
+                    <span className="inline-block px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">
+                      Para: Membros Existentes
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Como funciona no sistema:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded font-mono text-xs">Convite</span>
+                    <span className="text-gray-600">Gerado automaticamente quando pagamento é aprovado e enviado por e-mail</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded font-mono text-xs">Acesso</span>
+                    <span className="text-gray-600">Exibido no /status para membros acessarem seus grupos rapidamente</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
