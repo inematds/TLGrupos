@@ -320,13 +320,13 @@ export default function BotPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">
                 Comandos Disponíveis no Telegram
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="border border-gray-200 rounded-lg p-4">
                   <code className="px-2 py-1 bg-gray-100 rounded text-blue-600 font-mono">
                     /registrar
                   </code>
                   <p className="text-sm text-gray-600 mt-2">
-                    Cadastra o usuário no sistema. Se já estiver cadastrado, mostra as informações.
+                    Cadastra o usuario no sistema manualmente.
                   </p>
                 </div>
                 <div className="border border-gray-200 rounded-lg p-4">
@@ -334,52 +334,103 @@ export default function BotPage() {
                     /status
                   </code>
                   <p className="text-sm text-gray-600 mt-2">
-                    Mostra o status do cadastro: data de vencimento, dias restantes.
+                    Mostra status do cadastro (enviado no privado).
+                  </p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <code className="px-2 py-1 bg-gray-100 rounded text-blue-600 font-mono">
+                    /cadastro
+                  </code>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Envia link para completar cadastro com dados pessoais.
+                  </p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <code className="px-2 py-1 bg-gray-100 rounded text-blue-600 font-mono">
+                    /entrar TOKEN
+                  </code>
+                  <p className="text-sm text-gray-600 mt-2">
+                    Valida codigo de acesso e gera link de convite.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Mensagem para Grupo */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h2 className="text-xl font-bold text-blue-900 mb-4">
-                Mensagem para Enviar no Grupo
+            {/* Como Funciona */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Como o Bot Funciona
               </h2>
-              <div className="bg-white border border-blue-300 rounded-lg p-4">
-                <pre className="text-sm text-gray-800 whitespace-pre-wrap">
-{`🤖 Sistema de Gestão de Membros Ativo!
-
-✅ O que você precisa fazer:
-• NADA! Você já foi cadastrado automaticamente
-• Use /status para ver seu tempo de acesso
-• Use /registrar se ainda não estiver cadastrado
-
-📅 Você terá ${diasAcessoPadrao} dias de acesso
-⚠️ Será notificado antes do vencimento
-
-Use /status para verificar sua situação!`}
-                </pre>
-                <button
-                  onClick={() => {
-                    const text = `🤖 Sistema de Gestão de Membros Ativo!
-
-✅ O que você precisa fazer:
-• NADA! Você já foi cadastrado automaticamente
-• Use /status para ver seu tempo de acesso
-• Use /registrar se ainda não estiver cadastrado
-
-📅 Você terá ${diasAcessoPadrao} dias de acesso
-⚠️ Será notificado antes do vencimento
-
-Use /status para verificar sua situação!`;
-                    navigator.clipboard.writeText(text);
-                    alert('Mensagem copiada!');
-                  }}
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
-                >
-                  Copiar Mensagem
-                </button>
+              <div className="space-y-4">
+                <div className="flex gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+                  <div>
+                    <h3 className="font-semibold text-green-900">Auto-Cadastro ao Entrar</h3>
+                    <p className="text-sm text-green-700 mt-1">
+                      Quando alguem entra no grupo, o bot automaticamente cadastra a pessoa no sistema com {diasAcessoPadrao} dias de acesso.
+                      Uma mensagem de boas-vindas e enviada (configuravel na aba Auto-Cadastro).
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900">Auto-Cadastro por Mensagem</h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Se o membro nao foi cadastrado ao entrar, ao enviar a primeira mensagem no grupo ele e cadastrado silenciosamente.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="flex-shrink-0 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+                  <div>
+                    <h3 className="font-semibold text-purple-900">Notificacoes de Vencimento</h3>
+                    <p className="text-sm text-purple-700 mt-1">
+                      O sistema envia notificacoes automaticas 7, 3 e 1 dia antes do vencimento avisando o membro.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4 p-4 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex-shrink-0 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                  <div>
+                    <h3 className="font-semibold text-red-900">Remocao Automatica</h3>
+                    <p className="text-sm text-red-700 mt-1">
+                      Apos o vencimento, o membro e removido automaticamente de TODOS os grupos. Se entrar novamente, e reativado com nova data.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <div className="flex-shrink-0 w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold">5</div>
+                  <div>
+                    <h3 className="font-semibold text-orange-900">Entrada via Pagamento</h3>
+                    <p className="text-sm text-orange-700 mt-1">
+                      Links de convite gerados por pagamento sao rastreados. Quando o membro entra, o sistema atualiza automaticamente
+                      os dados de pagamento, acesso e vencimento.
+                    </p>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Fluxo de Pagamento */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Fluxo de Pagamento
+              </h2>
+              <div className="flex flex-wrap items-center justify-center gap-2 text-sm">
+                <span className="px-3 py-2 bg-gray-100 rounded-lg">Pagamento Aprovado</span>
+                <span className="text-gray-400">→</span>
+                <span className="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg">Link Gerado</span>
+                <span className="text-gray-400">→</span>
+                <span className="px-3 py-2 bg-purple-100 text-purple-800 rounded-lg">Email Enviado</span>
+                <span className="text-gray-400">→</span>
+                <span className="px-3 py-2 bg-green-100 text-green-800 rounded-lg">Membro Entra</span>
+                <span className="text-gray-400">→</span>
+                <span className="px-3 py-2 bg-emerald-100 text-emerald-800 rounded-lg">Banco Atualizado</span>
+              </div>
+              <p className="text-sm text-gray-500 text-center mt-4">
+                Todo o processo e automatico. O bot rastreia o link usado e vincula ao pagamento.
+              </p>
             </div>
           </div>
         )}
