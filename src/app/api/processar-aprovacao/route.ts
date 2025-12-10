@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     let formaPagamento = null;
     if (payment.payment_method_id) {
       const { data: paymentMethod } = await supabase
-        .from('formas_pagamento')
+        .from('forma_pagamentos')
         .select('nome')
         .eq('id', payment.payment_method_id)
         .single();

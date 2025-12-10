@@ -110,10 +110,10 @@ export default function GerenciarPagamentosPage() {
 
   const loadFormasPagamento = async () => {
     try {
-      const response = await fetch('/api/formas-pagamento');
+      const response = await fetch('/api/forma-pagamentos');
       const data = await response.json();
       if (response.ok) {
-        setFormasPagamento(data.formas || data || []);
+        setFormasPagamento(data.data || []);
       }
     } catch (error) {
       console.error('Erro ao carregar formas de pagamento:', error);
