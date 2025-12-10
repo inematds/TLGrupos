@@ -162,6 +162,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    // Primeiro, desassociar membros deste grupo (definir group_id como NULL)
+    const { error: updateError } = await supabase
+      .from('members')
+      .update({ group_id: null })
+      .eq('group_id', id);
+
+    if (updateError) {
+      console.warn('[Grupo Delete] Aviso ao desassociar membros:', updateError.message);
+      // Continua mesmo se não houver membros para atualizar
+    }
+
     const { error } = await supabase
       .from('telegram_groups')
       .delete()

@@ -680,7 +680,7 @@ npm install
             © {new Date().getFullYear()} TLGrupos - Sistema de Gerenciamento de Grupos Telegram
           </p>
           <p className="text-sm text-gray-500 mt-2">
-            v1.2.2 - Desenvolvido com Next.js, TypeScript e Supabase
+            v1.3.0 - Desenvolvido com Next.js, TypeScript e Supabase
           </p>
         </div>
       </footer>
