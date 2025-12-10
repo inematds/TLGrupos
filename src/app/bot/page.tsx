@@ -298,6 +298,10 @@ export default function BotPage() {
                       <span className="text-gray-600">Bot ID:</span>
                       <span className="font-mono text-gray-900">{botInfo.bot.id}</span>
                     </div>
+                    <div className="flex justify-between p-3 bg-gray-50 rounded">
+                      <span className="text-gray-600">Token:</span>
+                      <span className="font-mono text-gray-900">{botInfo.bot.id}:****</span>
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex justify-between p-3 bg-gray-50 rounded">
