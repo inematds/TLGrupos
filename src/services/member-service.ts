@@ -293,7 +293,7 @@ export async function removeMember(id: string) {
 /**
  * Exclui permanentemente um membro do banco de dados
  * ATENÇÃO: Esta ação é irreversível
- * Remove automaticamente todos os logs e pagamentos associados (CASCADE)
+ * Remove manualmente todos os logs e pagamentos associados antes de deletar o membro
  */
 export async function deleteMember(id: string) {
   const member = await getMemberById(id);
@@ -302,12 +302,45 @@ export async function deleteMember(id: string) {
     throw new Error('Membro não encontrado');
   }
 
-  console.log(`[deleteMember] Deletando membro ${member.nome} (${id}) e todos os registros relacionados (CASCADE)`);
+  console.log(`[deleteMember] Deletando membro ${member.nome} (${id}) e todos os registros relacionados`);
 
-  // DELETAR PERMANENTEMENTE O MEMBRO DO BANCO
-  // A foreign key com ON DELETE CASCADE vai automaticamente deletar:
-  // - Todos os logs relacionados
-  // - Todos os pagamentos relacionados
+  // 1. Deletar logs relacionados
+  const { error: logsError } = await supabase
+    .from('logs')
+    .delete()
+    .eq('member_id', id);
+
+  if (logsError) {
+    console.error('[deleteMember] Erro ao deletar logs:', logsError);
+    // Continuar mesmo com erro nos logs
+  } else {
+    console.log(`[deleteMember] Logs do membro ${id} deletados`);
+  }
+
+  // 2. Deletar pagamentos relacionados
+  const { error: paymentsError } = await supabase
+    .from('payments')
+    .delete()
+    .eq('member_id', id);
+
+  if (paymentsError) {
+    console.error('[deleteMember] Erro ao deletar pagamentos:', paymentsError);
+    // Continuar mesmo com erro nos pagamentos
+  } else {
+    console.log(`[deleteMember] Pagamentos do membro ${id} deletados`);
+  }
+
+  // 3. Deletar convites relacionados (se existir a tabela)
+  const { error: invitesError } = await supabase
+    .from('invites')
+    .delete()
+    .eq('member_id', id);
+
+  if (invitesError && invitesError.code !== 'PGRST116') {
+    console.error('[deleteMember] Erro ao deletar convites:', invitesError);
+  }
+
+  // 4. Finalmente, deletar o membro
   const { error } = await supabase
     .from('members')
     .delete()
@@ -316,15 +349,6 @@ export async function deleteMember(id: string) {
   if (error) {
     console.error('[deleteMember] Erro ao deletar membro:', error);
     console.error('[deleteMember] Detalhes do erro:', JSON.stringify(error, null, 2));
-
-    // Se o erro ainda for de foreign key constraint, avisar o usuário
-    if (error.code === '23503') {
-      throw new Error(
-        'Erro: Para deletar membros, execute primeiro o script SQL em scripts/fix-member-deletion.sql no Supabase SQL Editor. ' +
-        'Esse script configura as foreign keys para deletar em cascata.'
-      );
-    }
-
     throw new Error(`Erro ao excluir membro: ${error.message}`);
   }
 
