@@ -293,7 +293,7 @@ export async function removeMember(id: string) {
 /**
  * Exclui permanentemente um membro do banco de dados
  * ATENÇÃO: Esta ação é irreversível
- * Remove manualmente todos os logs e pagamentos associados antes de deletar o membro
+ * Remove manualmente todos os registros relacionados antes de deletar o membro
  */
 export async function deleteMember(id: string) {
   const member = await getMemberById(id);
@@ -304,55 +304,60 @@ export async function deleteMember(id: string) {
 
   console.log(`[deleteMember] Deletando membro ${member.nome} (${id}) e todos os registros relacionados`);
 
-  // 1. Primeiro, setar member_id como NULL nos logs (para desvincular)
+  // 1. Deletar payment_access_codes (depende de payments e members)
+  const { error: accessCodesError } = await supabase
+    .from('payment_access_codes')
+    .delete()
+    .eq('member_id', id);
+  if (accessCodesError) {
+    console.log('[deleteMember] Erro ou tabela não existe (payment_access_codes):', accessCodesError.message);
+  }
+
+  // 2. Deletar member_groups
+  const { error: memberGroupsError } = await supabase
+    .from('member_groups')
+    .delete()
+    .eq('member_id', id);
+  if (memberGroupsError) {
+    console.log('[deleteMember] Erro ou tabela não existe (member_groups):', memberGroupsError.message);
+  }
+
+  // 3. Deletar invites
+  const { error: invitesError } = await supabase
+    .from('invites')
+    .delete()
+    .eq('member_id', id);
+  if (invitesError) {
+    console.log('[deleteMember] Erro ou tabela não existe (invites):', invitesError.message);
+  }
+
+  // 4. Deletar payments
+  const { error: paymentsError } = await supabase
+    .from('payments')
+    .delete()
+    .eq('member_id', id);
+  if (paymentsError) {
+    console.log('[deleteMember] Erro ao deletar payments:', paymentsError.message);
+  }
+
+  // 5. Deletar logs (setar NULL se permitido, senão deletar)
   const { error: logsUpdateError } = await supabase
     .from('logs')
     .update({ member_id: null })
     .eq('member_id', id);
 
   if (logsUpdateError) {
-    console.error('[deleteMember] Erro ao desvincular logs:', logsUpdateError);
-    // Tentar deletar os logs diretamente
+    // Se não puder setar NULL, deletar
     const { error: logsDeleteError } = await supabase
       .from('logs')
       .delete()
       .eq('member_id', id);
-
     if (logsDeleteError) {
-      console.error('[deleteMember] Erro ao deletar logs:', logsDeleteError);
+      console.log('[deleteMember] Erro ao deletar logs:', logsDeleteError.message);
     }
-  } else {
-    console.log(`[deleteMember] Logs do membro ${id} desvinculados`);
   }
 
-  // 2. Setar member_id como NULL nos pagamentos
-  const { error: paymentsUpdateError } = await supabase
-    .from('payments')
-    .update({ member_id: null })
-    .eq('member_id', id);
-
-  if (paymentsUpdateError) {
-    console.error('[deleteMember] Erro ao desvincular pagamentos:', paymentsUpdateError);
-    // Tentar deletar os pagamentos diretamente
-    const { error: paymentsDeleteError } = await supabase
-      .from('payments')
-      .delete()
-      .eq('member_id', id);
-
-    if (paymentsDeleteError) {
-      console.error('[deleteMember] Erro ao deletar pagamentos:', paymentsDeleteError);
-    }
-  } else {
-    console.log(`[deleteMember] Pagamentos do membro ${id} desvinculados`);
-  }
-
-  // 3. Desvincular convites relacionados (se existir a tabela)
-  await supabase
-    .from('invites')
-    .update({ member_id: null })
-    .eq('member_id', id);
-
-  // 4. Finalmente, deletar o membro
+  // 6. Finalmente, deletar o membro
   const { error } = await supabase
     .from('members')
     .delete()
@@ -364,10 +369,10 @@ export async function deleteMember(id: string) {
     throw new Error(`Erro ao excluir membro: ${error.message}`);
   }
 
-  console.log(`[deleteMember] Membro ${id} e todos os registros relacionados foram excluídos permanentemente`);
+  console.log(`[deleteMember] Membro ${id} excluído permanentemente`);
   return {
     success: true,
-    message: 'Membro e todos os registros relacionados (logs, pagamentos) foram excluídos permanentemente'
+    message: 'Membro e todos os registros relacionados foram excluídos permanentemente'
   };
 }
 
