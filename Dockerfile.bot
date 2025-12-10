@@ -6,15 +6,14 @@ WORKDIR /app
 # Copiar arquivos de dependências
 COPY package*.json ./
 
-# Instalar dependências
-RUN npm ci --only=production
+# Instalar TODAS as dependências (tsx é devDependency)
+RUN npm ci
 
-# Copiar scripts
+# Copiar código fonte
+COPY src ./src
 COPY scripts ./scripts
-
-# Copiar arquivos de configuração necessários
 COPY tsconfig.json ./
 
 ENV NODE_ENV=production
 
-CMD ["node", "scripts/start-bot-wrapper.js"]
+CMD ["npx", "tsx", "scripts/start-bot.ts"]

@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Copiar arquivos de dependências
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -17,6 +17,26 @@ WORKDIR /app
 # Copiar dependências da stage anterior
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Variáveis de ambiente necessárias para o build (valores dummy - serão sobrescritos em runtime)
+ARG BASE_PATH=/TLGrupos
+ARG NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-anon-key
+ARG SUPABASE_SERVICE_ROLE_KEY=placeholder-service-role-key
+ARG TELEGRAM_BOT_TOKEN=placeholder-telegram-token
+ARG TELEGRAM_GROUP_ID=-1234567890
+ARG CRON_SECRET=placeholder-cron-secret
+ARG NEXTAUTH_SECRET=placeholder-nextauth-secret
+ARG RESEND_API_KEY=placeholder-resend-key
+ENV BASE_PATH=$BASE_PATH
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+ENV TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
+ENV TELEGRAM_GROUP_ID=$TELEGRAM_GROUP_ID
+ENV CRON_SECRET=$CRON_SECRET
+ENV NEXTAUTH_SECRET=$NEXTAUTH_SECRET
+ENV RESEND_API_KEY=$RESEND_API_KEY
 
 # Build da aplicação
 ENV NEXT_TELEMETRY_DISABLED 1
