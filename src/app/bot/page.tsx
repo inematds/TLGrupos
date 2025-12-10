@@ -16,15 +16,20 @@ export default function BotPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [telegramGroups, setTelegramGroups] = useState<TelegramGroup[]>([]);
-  const [activeTab, setActiveTab] = useState<'status' | 'grupos' | 'auto-cadastro'>('status');
+  const [activeTab, setActiveTab] = useState<'status' | 'grupos' | 'auto-cadastro' | 'configuracoes'>('status');
 
   // Configurações do Bot
   const [botWebhookUrl, setBotWebhookUrl] = useState('');
   const [botGrupoPrincipal, setBotGrupoPrincipal] = useState('-1002429706589');
   const [botAutoCadastroEntrar, setBotAutoCadastroEntrar] = useState(true);
   const [botAutoCadastroMensagem, setBotAutoCadastroMensagem] = useState(true);
+  const [botComandoRegistrar, setBotComandoRegistrar] = useState(true);
   const [diasAcessoPadrao, setDiasAcessoPadrao] = useState(30);
   const [saving, setSaving] = useState(false);
+
+  // Configurações de Remoção Automática
+  const [botRemocaoAutomatica, setBotRemocaoAutomatica] = useState(true);
+  const [botHorarioRemocao, setBotHorarioRemocao] = useState('03:00');
 
   // Mensagens personalizadas
   const [msgBoasVindas, setMsgBoasVindas] = useState(
@@ -86,16 +91,21 @@ export default function BotPage() {
     try {
       const res = await fetch('/api/config');
       const data = await res.json();
-      if (data.success && data.data) {
-        setBotWebhookUrl(data.data.bot_webhook_url || '');
-        setBotGrupoPrincipal(data.data.bot_grupo_principal || '-1002429706589');
-        setBotAutoCadastroEntrar(data.data.bot_auto_cadastro_entrar !== false);
-        setBotAutoCadastroMensagem(data.data.bot_auto_cadastro_mensagem !== false);
-        setDiasAcessoPadrao(data.data.dias_acesso_padrao || 30);
+      if (data.success && Array.isArray(data.data)) {
+        const getConfig = (chave: string) => data.data.find((c: any) => c.chave === chave)?.valor;
+
+        if (getConfig('bot_webhook_url')) setBotWebhookUrl(getConfig('bot_webhook_url'));
+        if (getConfig('bot_grupo_principal')) setBotGrupoPrincipal(getConfig('bot_grupo_principal'));
+        if (getConfig('bot_auto_cadastro_entrar')) setBotAutoCadastroEntrar(getConfig('bot_auto_cadastro_entrar') === 'true');
+        if (getConfig('bot_auto_cadastro_mensagem')) setBotAutoCadastroMensagem(getConfig('bot_auto_cadastro_mensagem') === 'true');
+        if (getConfig('bot_comando_registrar')) setBotComandoRegistrar(getConfig('bot_comando_registrar') === 'true');
+        if (getConfig('dias_acesso_padrao')) setDiasAcessoPadrao(parseInt(getConfig('dias_acesso_padrao')) || 30);
+        if (getConfig('bot_remocao_automatica')) setBotRemocaoAutomatica(getConfig('bot_remocao_automatica') === 'true');
+        if (getConfig('bot_horario_remocao')) setBotHorarioRemocao(getConfig('bot_horario_remocao'));
         // Mensagens personalizadas
-        if (data.data.msg_boas_vindas) setMsgBoasVindas(data.data.msg_boas_vindas);
-        if (data.data.msg_cadastro_mensagem) setMsgCadastroMensagem(data.data.msg_cadastro_mensagem);
-        if (data.data.msg_registrar) setMsgRegistrar(data.data.msg_registrar);
+        if (getConfig('msg_boas_vindas')) setMsgBoasVindas(getConfig('msg_boas_vindas'));
+        if (getConfig('msg_cadastro_mensagem')) setMsgCadastroMensagem(getConfig('msg_cadastro_mensagem'));
+        if (getConfig('msg_registrar')) setMsgRegistrar(getConfig('msg_registrar'));
       }
     } catch (error) {
       console.error('Erro ao carregar configs:', error);
@@ -111,7 +121,10 @@ export default function BotPage() {
         { chave: 'bot_grupo_principal', valor: botGrupoPrincipal },
         { chave: 'bot_auto_cadastro_entrar', valor: String(botAutoCadastroEntrar) },
         { chave: 'bot_auto_cadastro_mensagem', valor: String(botAutoCadastroMensagem) },
+        { chave: 'bot_comando_registrar', valor: String(botComandoRegistrar) },
         { chave: 'dias_acesso_padrao', valor: String(diasAcessoPadrao) },
+        { chave: 'bot_remocao_automatica', valor: String(botRemocaoAutomatica) },
+        { chave: 'bot_horario_remocao', valor: botHorarioRemocao },
         { chave: 'msg_boas_vindas', valor: msgBoasVindas },
         { chave: 'msg_cadastro_mensagem', valor: msgCadastroMensagem },
         { chave: 'msg_registrar', valor: msgRegistrar },
@@ -205,8 +218,19 @@ export default function BotPage() {
                   : 'border-transparent text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Settings className="w-5 h-5" />
+              <Users className="w-5 h-5" />
               <span>Auto-Cadastro</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('configuracoes')}
+              className={`flex items-center gap-2 px-6 py-3 border-b-2 transition-colors ${
+                activeTab === 'configuracoes'
+                  ? 'border-blue-600 text-blue-600 font-semibold'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Settings className="w-5 h-5" />
+              <span>Configurações</span>
             </button>
           </div>
         </div>
@@ -805,6 +829,213 @@ export default function BotPage() {
                   Variáveis disponíveis: <code className="bg-gray-100 px-1 rounded">{'{nome}'}</code>, <code className="bg-gray-100 px-1 rounded">{'{dias}'}</code>, <code className="bg-gray-100 px-1 rounded">{'{data_vencimento}'}</code>
                 </p>
               </div>
+            </div>
+
+            {/* Botão Salvar */}
+            <div className="flex justify-end">
+              <button
+                onClick={saveConfigs}
+                disabled={saving}
+                className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium text-lg"
+              >
+                {saving ? 'Salvando...' : 'Salvar Todas as Configurações'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab: Configurações */}
+        {activeTab === 'configuracoes' && (
+          <div className="space-y-6">
+            {/* Contador de Grupos no Topo */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-lg p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium opacity-90 uppercase">Total de Grupos Telegram</p>
+                  <p className="text-5xl font-bold mt-1">{telegramGroups.length}</p>
+                  <p className="text-sm opacity-80 mt-2">
+                    {telegramGroups.filter(g => g.ativo).length} ativos | {telegramGroups.filter(g => !g.ativo).length} inativos
+                  </p>
+                </div>
+                <Bot className="w-16 h-16 opacity-30" />
+              </div>
+            </div>
+
+            {/* Configuração do Grupo Principal */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">Grupo Principal para Convites</h2>
+
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-500 mb-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <p className="text-sm font-bold text-green-900">GRUPO PRINCIPAL</p>
+                  </div>
+                  <span className="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">
+                    CONVITES ATIVOS
+                  </span>
+                </div>
+
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-green-900 mb-1">
+                    ID do Grupo (para geração de convites)
+                  </label>
+                  <input
+                    type="text"
+                    value={botGrupoPrincipal}
+                    onChange={(e) => setBotGrupoPrincipal(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border-2 border-green-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="-1002242190548"
+                  />
+                  <p className="text-xs text-green-700 mt-1">
+                    Digite o ID do grupo do Telegram (com o sinal de menos). Exemplo: -1002242190548
+                  </p>
+                </div>
+
+                <div className="bg-white bg-opacity-50 p-3 rounded border border-green-300">
+                  <p className="text-xs text-green-700 mb-1">
+                    Todos os links de acesso pagos serão gerados para este grupo
+                  </p>
+                  <p className="text-xs text-green-700">
+                    Auto-cadastro ativo para novos membros
+                  </p>
+                </div>
+              </div>
+
+              {/* Lista de Todos os Grupos */}
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-300">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium text-gray-700">Todos os Grupos Cadastrados</p>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded">
+                    {telegramGroups.length} grupos
+                  </span>
+                </div>
+                {telegramGroups.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">
+                    <p>Nenhum grupo cadastrado</p>
+                    <p className="text-xs mt-1">Acesse a pagina de Grupos para adicionar</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                    {telegramGroups.map((grupo) => (
+                      <div
+                        key={grupo.id}
+                        className={`p-2 rounded border ${
+                          (grupo.telegram_group_id || grupo.chat_id) === botGrupoPrincipal
+                            ? 'bg-green-50 border-green-300'
+                            : grupo.ativo
+                            ? 'bg-white border-gray-200'
+                            : 'bg-gray-100 border-gray-300 opacity-60'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-gray-900 truncate">
+                              {grupo.nome || 'Sem nome'}
+                            </p>
+                            <p className="text-xs font-mono text-gray-500">{grupo.telegram_group_id || grupo.chat_id}</p>
+                          </div>
+                          <div className="flex items-center gap-1 ml-2">
+                            {(grupo.telegram_group_id || grupo.chat_id) === botGrupoPrincipal && (
+                              <span className="px-1.5 py-0.5 bg-green-500 text-white text-xs rounded">
+                                Principal
+                              </span>
+                            )}
+                            {grupo.ativo ? (
+                              <span className="w-2 h-2 bg-green-500 rounded-full" title="Ativo"></span>
+                            ) : (
+                              <span className="w-2 h-2 bg-gray-400 rounded-full" title="Inativo"></span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-3 bg-blue-50 border-l-4 border-blue-500 p-3 rounded-r">
+                  <p className="text-xs text-blue-800">
+                    <strong>Funcionamento:</strong> Todos os grupos recebem cadastro automatico de novos membros. Apenas o grupo principal recebe links de convite pagos.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Remoção Automática */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Remoção Automática de Membros Vencidos</h2>
+                  <p className="text-sm text-gray-600">Remove automaticamente membros com acesso vencido dos grupos do Telegram</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBotRemocaoAutomatica(!botRemocaoAutomatica)}
+                  className={`relative w-14 h-7 rounded-full transition-colors ${
+                    botRemocaoAutomatica ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                      botRemocaoAutomatica ? 'right-1' : 'left-1'
+                    }`}
+                  ></div>
+                </button>
+              </div>
+
+              {botRemocaoAutomatica && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Horário de Execução Diária
+                  </label>
+                  <input
+                    type="time"
+                    value={botHorarioRemocao}
+                    onChange={(e) => setBotHorarioRemocao(e.target.value)}
+                    className="w-40 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    A remoção automática será executada diariamente neste horário (fuso horário do servidor)
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Comando /registrar */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Comando /registrar</h2>
+                  <p className="text-sm text-gray-600">Permite cadastro voluntário via comando no grupo</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setBotComandoRegistrar(!botComandoRegistrar)}
+                  className={`relative w-14 h-7 rounded-full transition-colors ${
+                    botComandoRegistrar ? 'bg-green-600' : 'bg-gray-300'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                      botComandoRegistrar ? 'right-1' : 'left-1'
+                    }`}
+                  ></div>
+                </button>
+              </div>
+            </div>
+
+            {/* URL do Webhook */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-lg font-bold text-gray-900 mb-4">URL do Webhook</h2>
+              <input
+                type="url"
+                value={botWebhookUrl}
+                onChange={(e) => setBotWebhookUrl(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://seudominio.com/api/telegram/webhook"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                URL pública onde o bot receberá atualizações do Telegram
+              </p>
             </div>
 
             {/* Botão Salvar */}
