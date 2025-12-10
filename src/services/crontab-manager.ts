@@ -10,16 +10,24 @@ import fs from 'fs/promises';
 
 const execAsync = promisify(exec);
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Configuração do Supabase não encontrada');
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 /**
  * Atualiza o crontab na VPS com base nos cron jobs ativos do banco
  */
 export async function atualizarCrontab() {
   try {
+    const supabase = getSupabaseClient();
+
     // 1. Buscar todos os cron jobs ativos do banco
     const { data: jobs, error } = await supabase
       .from('cron_jobs')
