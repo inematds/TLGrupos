@@ -7,16 +7,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { atualizarCrontab, calcularProximaExecucao } from '@/services/crontab-manager';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Configuração do Supabase não encontrada');
+  }
+
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 /**
  * GET - Listar todos os cron jobs
  */
 export async function GET() {
   try {
+    const supabase = getSupabaseClient();
     const { data: jobs, error } = await supabase
       .from('cron_jobs')
       .select('*')
@@ -48,6 +55,7 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
     const body = await request.json();
     const { nome, descricao, endpoint, frequencia, ativo = true } = body;
 
@@ -114,6 +122,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PUT(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
     const body = await request.json();
     const { id, nome, descricao, endpoint, frequencia, ativo } = body;
 
@@ -182,6 +191,7 @@ export async function PUT(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const supabase = getSupabaseClient();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
