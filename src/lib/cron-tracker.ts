@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { serviceSupabase } from './supabase';
 
 /**
  * Atualiza os dados de execução de um CRON job na tabela cron_jobs
@@ -14,7 +9,7 @@ const supabase = createClient(
 export async function trackCronExecution(endpoint: string, success: boolean) {
   try {
     // Buscar o CRON job pelo endpoint
-    const { data: cronJob, error: fetchError } = await supabase
+    const { data: cronJob, error: fetchError } = await serviceSupabase
       .from('cron_jobs')
       .select('*')
       .eq('endpoint', endpoint)
@@ -43,7 +38,7 @@ export async function trackCronExecution(endpoint: string, success: boolean) {
     }
 
     // Atualizar no banco
-    const { error: updateError } = await supabase
+    const { error: updateError } = await serviceSupabase
       .from('cron_jobs')
       .update(updates)
       .eq('id', cronJob.id);

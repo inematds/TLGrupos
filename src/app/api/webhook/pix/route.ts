@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { serviceSupabase as supabase } from '@/lib/supabase';
 import { sendInviteLink } from '@/services/email-service';
 import { createMember } from '@/services/member-service';
 import { Telegraf } from 'telegraf';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getTelegramBot() {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) throw new Error('TELEGRAM_BOT_TOKEN not set');
+  return new Telegraf(token);
+}
 
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN!);
-const GROUP_ID = process.env.TELEGRAM_GROUP_ID!;
+function getGroupId() {
+  return process.env.TELEGRAM_GROUP_ID || '';
+}
 
 /**
  * Webhook para receber notificações de pagamento PIX
@@ -80,6 +82,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Gerar link de convite único
+    const bot = getTelegramBot();
+    const GROUP_ID = getGroupId();
     const inviteLink = await bot.telegram.createChatInviteLink(GROUP_ID, {
       expire_date: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 dias
       member_limit: 1,

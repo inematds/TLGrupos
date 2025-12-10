@@ -1,12 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { serviceSupabase as supabase } from '@/lib/supabase';
 import { bot } from '@/lib/telegram';
-
-// Cliente Supabase com service role (bypass RLS)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // ID do admin para notificações (configure no .env)
 const ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID

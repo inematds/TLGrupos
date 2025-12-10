@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { serviceSupabase as supabase } from '@/lib/supabase';
 import { createInviteLink, createGenericInviteLink } from '@/lib/telegram';
 import { sendPaymentApprovedNotification } from '@/services/notification-service';
 import { trackCronExecution } from '@/lib/cron-tracker';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 /**
  * POST /api/cron/process-approved-payments
