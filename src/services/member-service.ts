@@ -304,41 +304,53 @@ export async function deleteMember(id: string) {
 
   console.log(`[deleteMember] Deletando membro ${member.nome} (${id}) e todos os registros relacionados`);
 
-  // 1. Deletar logs relacionados
-  const { error: logsError } = await supabase
+  // 1. Primeiro, setar member_id como NULL nos logs (para desvincular)
+  const { error: logsUpdateError } = await supabase
     .from('logs')
-    .delete()
+    .update({ member_id: null })
     .eq('member_id', id);
 
-  if (logsError) {
-    console.error('[deleteMember] Erro ao deletar logs:', logsError);
-    // Continuar mesmo com erro nos logs
+  if (logsUpdateError) {
+    console.error('[deleteMember] Erro ao desvincular logs:', logsUpdateError);
+    // Tentar deletar os logs diretamente
+    const { error: logsDeleteError } = await supabase
+      .from('logs')
+      .delete()
+      .eq('member_id', id);
+
+    if (logsDeleteError) {
+      console.error('[deleteMember] Erro ao deletar logs:', logsDeleteError);
+    }
   } else {
-    console.log(`[deleteMember] Logs do membro ${id} deletados`);
+    console.log(`[deleteMember] Logs do membro ${id} desvinculados`);
   }
 
-  // 2. Deletar pagamentos relacionados
-  const { error: paymentsError } = await supabase
+  // 2. Setar member_id como NULL nos pagamentos
+  const { error: paymentsUpdateError } = await supabase
     .from('payments')
-    .delete()
+    .update({ member_id: null })
     .eq('member_id', id);
 
-  if (paymentsError) {
-    console.error('[deleteMember] Erro ao deletar pagamentos:', paymentsError);
-    // Continuar mesmo com erro nos pagamentos
+  if (paymentsUpdateError) {
+    console.error('[deleteMember] Erro ao desvincular pagamentos:', paymentsUpdateError);
+    // Tentar deletar os pagamentos diretamente
+    const { error: paymentsDeleteError } = await supabase
+      .from('payments')
+      .delete()
+      .eq('member_id', id);
+
+    if (paymentsDeleteError) {
+      console.error('[deleteMember] Erro ao deletar pagamentos:', paymentsDeleteError);
+    }
   } else {
-    console.log(`[deleteMember] Pagamentos do membro ${id} deletados`);
+    console.log(`[deleteMember] Pagamentos do membro ${id} desvinculados`);
   }
 
-  // 3. Deletar convites relacionados (se existir a tabela)
-  const { error: invitesError } = await supabase
+  // 3. Desvincular convites relacionados (se existir a tabela)
+  await supabase
     .from('invites')
-    .delete()
+    .update({ member_id: null })
     .eq('member_id', id);
-
-  if (invitesError && invitesError.code !== 'PGRST116') {
-    console.error('[deleteMember] Erro ao deletar convites:', invitesError);
-  }
 
   // 4. Finalmente, deletar o membro
   const { error } = await supabase
