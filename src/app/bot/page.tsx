@@ -230,7 +230,7 @@ export default function BotPage() {
               }`}
             >
               <Settings className="w-5 h-5" />
-              <span>Configurações</span>
+              <span>Bot-Conf</span>
             </button>
           </div>
         </div>
