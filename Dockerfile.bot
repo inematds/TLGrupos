@@ -1,0 +1,20 @@
+# Dockerfile para o Telegram Bot
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package*.json ./
+
+# Instalar dependências
+RUN npm ci --only=production
+
+# Copiar scripts
+COPY scripts ./scripts
+
+# Copiar arquivos de configuração necessários
+COPY tsconfig.json ./
+
+ENV NODE_ENV=production
+
+CMD ["node", "scripts/start-bot-wrapper.js"]
