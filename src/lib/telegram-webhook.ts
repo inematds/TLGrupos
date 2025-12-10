@@ -980,7 +980,10 @@ bot.command('status', async (ctx) => {
     `📊 Status: ${statusMsg}\n` +
     `${diasRestantes <= 7 && diasRestantes > 0 ? '\n⚠️ Seu acesso está próximo de vencer!' : ''}` +
     `${diasRestantes < 0 ? '\n❌ Seu acesso está vencido. Solicite renovação.' : ''}` +
-    gruposText;
+    gruposText +
+    `\n\n🔗 *Links Úteis:*\n` +
+    `🌐 [INEMA.VIP](https://inema.vip)\n` +
+    `🤖 [INEMA.Claude](https://inema.claude) _(Acesso Gratuito)_`;
 
   // Se foi usado no grupo, enviar no privado
   if (isGroup) {
