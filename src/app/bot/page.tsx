@@ -599,21 +599,13 @@ export default function BotPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-gray-900">Todos os Grupos</h2>
-                <a
-                  href="/grupos"
-                  className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  Gerenciar Grupos <ChevronRight className="w-4 h-4" />
-                </a>
               </div>
 
               {telegramGroups.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Layers className="w-12 h-12 mx-auto mb-4 opacity-30" />
                   <p>Nenhum grupo cadastrado</p>
-                  <a href="/grupos" className="text-blue-600 hover:underline text-sm mt-2 inline-block">
-                    Adicionar grupo
-                  </a>
+                  <p className="text-sm mt-2">Vá em Grupos no menu para adicionar</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
